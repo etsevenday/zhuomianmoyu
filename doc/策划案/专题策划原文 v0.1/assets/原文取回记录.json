@@ -1,0 +1,66 @@
+{
+  "formatVersion": 1,
+  "note": "保留完整原文，非正式参数批准；各文件原文区间与来源记录对应。",
+  "records": [
+    {
+      "topic": "总策划",
+      "file": "01 总策划与首版范围 原文.md",
+      "sourceThreadId": "01a1e003-9fe0-7080-8bdf-179dbc318139",
+      "sourceThreadTitle": "一起摸鱼｜总策划与首版范围",
+      "sourceTurnId": "01a1e003-a076-7621-ae79-a9c57862f2e6",
+      "sourceMessageId": "msg_061e195597d06614016af9dc36efbc87d0baa6aee89fb9455f",
+      "originalUtf16Length": 6402,
+      "archivedAt": "2026-11-16",
+      "status": "完整初版答复；当前适用状态见06跨专题修订与待定矩阵",
+      "originalUtf8Sha256": "85faed1510e2830f56ccaba1920fbb04fe6dd8397143247b04b55fd3a32e83f4"
+    },
+    {
+      "topic": "输入",
+      "file": "02 输入玩法与概率数值 原文.md",
+      "sourceThreadId": "01a1e003-a134-75c0-a93c-b48cc1519c74",
+      "sourceThreadTitle": "一起摸鱼｜输入玩法与概率数值",
+      "sourceTurnId": "01a1e003-a1ae-74f0-80d7-52361eb2f34e",
+      "sourceMessageId": "msg_05cd5e7aa4ac7040016af9dc5f866087d09e301f1e5c2fca34",
+      "originalUtf16Length": 7439,
+      "archivedAt": "2026-11-16",
+      "status": "完整初版答复；当前适用状态见06跨专题修订与待定矩阵",
+      "originalUtf8Sha256": "f411612363d0447b21daa57c966c203dbec8833d9c68d96008ea88080dfa5759"
+    },
+    {
+      "topic": "地图",
+      "file": "03 三张地图与鱼类图鉴 原文.md",
+      "sourceThreadId": "01a1e003-a27f-7a91-992a-a3f6ccaeef9b",
+      "sourceThreadTitle": "一起摸鱼｜三张地图与鱼类图鉴",
+      "sourceTurnId": "01a1e003-a304-7152-ba09-728bd6b78b3a",
+      "sourceMessageId": "msg_00f6d52c357b53fc016af9dc51530087d0808a493d3535e40f",
+      "originalUtf16Length": 6314,
+      "archivedAt": "2026-11-16",
+      "status": "完整初版答复；当前适用状态见06跨专题修订与待定矩阵",
+      "originalUtf8Sha256": "a96a7873c87c98418d6561b2b0efaeb3d42ee12cebb015e1b33f62a0f4c7fbf8"
+    },
+    {
+      "topic": "经济",
+      "file": "04 鱼获经济与水族馆收藏 原文.md",
+      "sourceThreadId": "01a1e003-a3a6-7282-af33-7a0b3a8c97b4",
+      "sourceThreadTitle": "一起摸鱼｜鱼获经济与水族馆收藏",
+      "sourceTurnId": "01a1e003-a420-7512-aa81-0a7ae9f71101",
+      "sourceMessageId": "msg_0f3a120e2eae453e016af9dc80bb6887d0a90ac7699095d86b",
+      "originalUtf16Length": 6553,
+      "archivedAt": "2026-11-16",
+      "status": "完整初版答复；当前适用状态见06跨专题修订与待定矩阵",
+      "originalUtf8Sha256": "92a63c98e8e36f0e402890e7f8e3c9b0540b583d911b1eb3894f3a16540fa128"
+    },
+    {
+      "topic": "技术",
+      "file": "05 Steam联机与技术落地 原文.md",
+      "sourceThreadId": "01a1e003-a673-7281-853a-9f09dc63201a",
+      "sourceThreadTitle": "一起摸鱼｜Steam联机与技术落地",
+      "sourceTurnId": "01a1e003-a6fc-7e22-bb9e-3b080535f673",
+      "sourceMessageId": "msg_0ef45e69f390661f016af9dc75b67087d0aaac0ff60109f94e",
+      "originalUtf16Length": 10597,
+      "archivedAt": "2026-11-16",
+      "status": "完整初版答复；当前适用状态见06跨专题修订与待定矩阵",
+      "originalUtf8Sha256": "b6fa66f77cf910e9c6e7c9280c1f4a3a894f48cdc56a74e17bb38dcafa85491d"
+    }
+  ]
+}
