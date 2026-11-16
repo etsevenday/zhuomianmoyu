@@ -1,0 +1,25 @@
+bin/
+obj/
+.vs/
+.vscode/
+*.user
+*.suo
+TestResults/
+publish/
+node_modules/
+dist/
+*.swp
+.DS_Store
+Thumbs.db
+__pycache__/
+*.pyc
+
+# 本机工具目录，不入库
+.deck/
+.codex/
+.agents/
+.claude/settings.local.json
+
+# 压缩包不入库
+*.7z
+*.zip
