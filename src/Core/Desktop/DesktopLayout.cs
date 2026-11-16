@@ -52,15 +52,9 @@ namespace Moyu.Core.Desktop
         /// <summary>收起后的头像：直径为小窗高的 1/4。</summary>
         public double AvatarSize => WindowHeight / 4;
 
-        /// <summary>收起时头像放在小窗左下（角色所在处），并夹进工作区。</summary>
-        public WindowPosition AvatarPosition(WindowPosition window)
-        {
-            double x = window.X + WindowWidth * 0.06;
-            double y = window.Y + WindowHeight - AvatarSize - WindowHeight * 0.18;
-            return new WindowPosition(
-                Math.Max(0, Math.Min(DesktopWidth - AvatarSize, x)),
-                Math.Max(0, Math.Min(WorkAreaHeight - AvatarSize, y)));
-        }
+        /// <summary>收起时头像放在小窗左下（角色所在处）。头像总在小窗范围内，小窗已夹进工作区，头像不用再夹。</summary>
+        public WindowPosition AvatarPosition(WindowPosition window) =>
+            new WindowPosition(window.X + WindowWidth * 0.06, window.Y + WindowHeight - AvatarSize - WindowHeight * 0.18);
 
         /// <summary>由头像位置反推恢复后小窗的位置（拖动过头像时用）。</summary>
         public WindowPosition WindowFromAvatar(WindowPosition avatar) =>
@@ -80,7 +74,9 @@ namespace Moyu.Core.Desktop
 
         public bool Equals(WindowPosition other) => X.Equals(other.X) && Y.Equals(other.Y);
         public override bool Equals(object? obj) => obj is WindowPosition p && Equals(p);
+        // Stryker disable once all : 只供字典与调试输出，不属于玩法规则
         public override int GetHashCode() => X.GetHashCode() * 397 ^ Y.GetHashCode();
+        // Stryker disable once all : 同上
         public override string ToString() => $"({X:0.#}, {Y:0.#})";
     }
 }

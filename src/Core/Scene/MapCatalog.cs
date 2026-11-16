@@ -70,6 +70,7 @@ namespace Moyu.Core.Scene
             var shoreBlocked = new[] { new SceneRect(110, 520, 170, 600), new SceneRect(1440, 520, 1500, 600) };
             var shallowBlocked = new[] { new SceneRect(960, 650, 1340, 735) };
             MapDef Make(string id, string name) => new MapDef(id, name, shore, shallow, shoreBlocked, shallowBlocked, 330, 420);
+            // Stryker disable once String : 占位名称，文字待 B0 Q5 由文案定稿
             return new MapCatalog(new[] { Make(Pond, "地图一"), Make(Stream, "地图二"), Make(Bay, "地图三") });
         }
     }

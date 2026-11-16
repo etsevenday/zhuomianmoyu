@@ -27,7 +27,9 @@ namespace Moyu.Core.Scene
 
         public bool Equals(ScenePoint other) => X.Equals(other.X) && Y.Equals(other.Y);
         public override bool Equals(object? obj) => obj is ScenePoint p && Equals(p);
+        // Stryker disable once all : 只供字典与调试输出，不属于玩法规则
         public override int GetHashCode() => X.GetHashCode() * 397 ^ Y.GetHashCode();
+        // Stryker disable once all : 同上
         public override string ToString() => $"({X:0.#}, {Y:0.#})";
     }
 
@@ -49,8 +51,6 @@ namespace Moyu.Core.Scene
         public double CenterY => (Top + Bottom) / 2;
 
         public bool Contains(ScenePoint p) => p.X >= Left && p.X <= Right && p.Y >= Top && p.Y <= Bottom;
-
-        public bool Contains(SceneRect r) => r.Left >= Left && r.Right <= Right && r.Top >= Top && r.Bottom <= Bottom;
 
         public bool Intersects(SceneRect r) => r.Left < Right && r.Right > Left && r.Top < Bottom && r.Bottom > Top;
     }

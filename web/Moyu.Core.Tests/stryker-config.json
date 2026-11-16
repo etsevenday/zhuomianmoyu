@@ -1,0 +1,6 @@
+{
+  "stryker-config": {
+    "reporters": [ "html", "progress" ],
+    "thresholds": { "high": 100, "low": 90, "break": 0 }
+  }
+}

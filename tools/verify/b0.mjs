@@ -294,9 +294,12 @@ async function run() {
     await clickBtn('摸鱼'); await clickBtn('手竿');
     const p = await T('bear()');
     check('B0-22 切到手竿：竿架姿态、回到岸边', p.mode === 'Pole' && p.y >= 540 && p.y <= 590 && (await modeText()) === '手竿', p);
+    // 先换到自己选的点：用自动安排的默认点时，"没动"和"被重排回同一点"分不出来
+    await clickAt(await scenePt(700, 565));
+    const own = await T('bear()');
     await clickBtn('手竿'); await clickBtn('路亚');
     const l = await T('bear()');
-    check('B0-22 路亚↔手竿同在岸边：落点不动', l.mode === 'Lure' && l.x === p.x && l.y === p.y, l);
+    check('B0-22 路亚↔手竿同在岸边：玩家选的落点不动', near(own.x, 700, 2) && l.mode === 'Lure' && l.x === own.x && l.y === own.y, { own, after: l });
     await clickBtn('路亚'); await clickBtn('路亚');
     const same = await T('bear()');
     check('B0-23 选当前模式：菜单关闭、落点不动', same.x === l.x && (await T('panels()')).length === 0, same);

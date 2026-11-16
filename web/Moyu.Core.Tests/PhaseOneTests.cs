@@ -65,6 +65,7 @@ public class PhaseOneTests
         Assert.That(c.State.Collapsed, Is.True);
         Assert.That(c.State.Panel, Is.EqualTo(Panel.None));
         c.Restore();
+        Assert.That(c.State.Collapsed, Is.False);
         Assert.That(c.State.Window, Is.EqualTo(new WindowPosition(300, 300)));
     }
 
@@ -91,6 +92,8 @@ public class PhaseOneTests
     public void Switching_mode_moves_between_shore_and_shallow()
     {
         var c = NewController();
+        // 先换到玩家自己选的点：若用自动安排的默认点，"没动"和"被重排回同一点"分不出来
+        c.ClickScene(new ScenePoint(700, 565));
         c.TogglePanel(Panel.ModeMenu);
         var shoreSpot = c.State.Spot;
         c.SwitchMode(FishingMode.Pole);

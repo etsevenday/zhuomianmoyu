@@ -49,10 +49,14 @@ namespace Moyu.Core.Scene
             var occupied = new List<ScenePoint>(others);
             double y = area.CenterY;
             double anchor = Math.Max(area.Left, Math.Min(area.Right, map.AnchorXOf(kind)));
+            // 步数上限留了余量：区域两端放不下占地框，最远几步本来就不会命中，所以上限多一步少一步结果都一样。
+            // Stryker disable once Arithmetic : 步数上限有余量，见上
             int maxSteps = (int)Math.Ceiling((area.Right - area.Left) / ArrangeStep) + 1;
+            // Stryker disable once Equality : 同上，少试最后一步不影响结果
             for (int i = 0; i <= maxSteps; i++)
             {
-                foreach (double x in i == 0 ? new[] { anchor } : new[] { anchor + i * ArrangeStep, anchor - i * ArrangeStep })
+                // i 为 0 时两点都是锚点本身，重复试一次无妨
+                foreach (double x in new[] { anchor + i * ArrangeStep, anchor - i * ArrangeStep })
                 {
                     var p = new ScenePoint(x, y);
                     if (area.Contains(p) && Fits(map, kind, p, occupied)) return p;

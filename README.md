@@ -26,7 +26,7 @@ tools/verify/            浏览器验收脚本（零依赖 Node + CDP），每�
 
 将来接 Unity：在 Unity 工程的 `Packages/manifest.json` 里加 `"com.moyu.core": "file:../../src/Core"`。
 
-本地运行需要 .NET 8 SDK：`dotnet test web/Moyu.sln`；`dotnet run --project web/Moyu.Web --launch-profile http`（http://localhost:5188）。浏览器验收需要 Node 22+ 和 Chrome/Edge：推送前跑 `node tools/verify/b0.mjs --release`（照 CI 发布本地 Release 包再测）；也可给开发服务器网址，不给网址就测线上。
+本地运行需要 .NET 8 SDK：`dotnet test web/Moyu.sln`；`dotnet run --project web/Moyu.Web --launch-profile http`（http://localhost:5188）。浏览器验收需要 Node 22+ 和 Chrome/Edge：推送前跑 `node tools/verify/b0.mjs --release`（照 CI 发布本地 Release 包再测）；也可给开发服务器网址，不给网址就测线上。改了内核还要跑变异测试：`dotnet tool restore` 后在 `web/Moyu.Core.Tests` 里 `dotnet stryker --since:origin/main`（见测试用例准则 §5）。
 
 ## 分工
 

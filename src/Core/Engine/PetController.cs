@@ -85,6 +85,7 @@ namespace Moyu.Core.Engine
         public void SwitchMode(FishingMode mode)
         {
             State.Panel = Panel.None;
+            // Stryker disable once Statement : 去掉也一样——同模式时 sameArea 为真且已有落点，不会重排
             if (State.Mode == mode) return;
             bool sameArea = State.Mode.Area() == mode.Area();
             State.Mode = mode;
