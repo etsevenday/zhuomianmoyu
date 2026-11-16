@@ -1,0 +1,162 @@
+{
+  "image_count": 9,
+  "all_have_true_alpha_transparency": true,
+  "all_empty_upper_left_is_clear": true,
+  "all_bottom_toolbar_samples_nearly_opaque": true,
+  "note": "Visual references only. Alpha channel checks do not verify operating-system mouse click-through. Some generated opaque interiors use alpha254; production UI should use opacity1.",
+  "files": [
+    {
+      "file": "00-transparent-main.png",
+      "mode": "RGBA",
+      "pixels": [
+        1672,
+        941
+      ],
+      "alpha_extrema": [
+        0,
+        255
+      ],
+      "fully_transparent_pixels": 622976,
+      "high_opacity_pixels_alpha_250_255": 918165,
+      "empty_upper_left_alpha": 0,
+      "bottom_toolbar_alpha": 254,
+      "has_true_alpha_transparency": true
+    },
+    {
+      "file": "01-mode-menu.png",
+      "mode": "RGBA",
+      "pixels": [
+        1672,
+        941
+      ],
+      "alpha_extrema": [
+        0,
+        255
+      ],
+      "fully_transparent_pixels": 750461,
+      "high_opacity_pixels_alpha_250_255": 769246,
+      "empty_upper_left_alpha": 0,
+      "bottom_toolbar_alpha": 254,
+      "has_true_alpha_transparency": true
+    },
+    {
+      "file": "02-friends-room.png",
+      "mode": "RGBA",
+      "pixels": [
+        1671,
+        941
+      ],
+      "alpha_extrema": [
+        0,
+        255
+      ],
+      "fully_transparent_pixels": 466007,
+      "high_opacity_pixels_alpha_250_255": 1080632,
+      "empty_upper_left_alpha": 0,
+      "bottom_toolbar_alpha": 254,
+      "has_true_alpha_transparency": true
+    },
+    {
+      "file": "03-fish-basket.png",
+      "mode": "RGBA",
+      "pixels": [
+        1672,
+        941
+      ],
+      "alpha_extrema": [
+        0,
+        255
+      ],
+      "fully_transparent_pixels": 357985,
+      "high_opacity_pixels_alpha_250_255": 1191813,
+      "empty_upper_left_alpha": 0,
+      "bottom_toolbar_alpha": 253,
+      "has_true_alpha_transparency": true
+    },
+    {
+      "file": "04-collection-room.png",
+      "mode": "RGBA",
+      "pixels": [
+        1671,
+        941
+      ],
+      "alpha_extrema": [
+        0,
+        255
+      ],
+      "fully_transparent_pixels": 350739,
+      "high_opacity_pixels_alpha_250_255": 1199422,
+      "empty_upper_left_alpha": 0,
+      "bottom_toolbar_alpha": 254,
+      "has_true_alpha_transparency": true
+    },
+    {
+      "file": "05-fish-records.png",
+      "mode": "RGBA",
+      "pixels": [
+        1671,
+        941
+      ],
+      "alpha_extrema": [
+        0,
+        255
+      ],
+      "fully_transparent_pixels": 353695,
+      "high_opacity_pixels_alpha_250_255": 1197095,
+      "empty_upper_left_alpha": 0,
+      "bottom_toolbar_alpha": 254,
+      "has_true_alpha_transparency": true
+    },
+    {
+      "file": "06-skin-draw.png",
+      "mode": "RGBA",
+      "pixels": [
+        1671,
+        941
+      ],
+      "alpha_extrema": [
+        0,
+        255
+      ],
+      "fully_transparent_pixels": 331856,
+      "high_opacity_pixels_alpha_250_255": 1214833,
+      "empty_upper_left_alpha": 0,
+      "bottom_toolbar_alpha": 253,
+      "has_true_alpha_transparency": true
+    },
+    {
+      "file": "07-settings.png",
+      "mode": "RGBA",
+      "pixels": [
+        1672,
+        941
+      ],
+      "alpha_extrema": [
+        0,
+        255
+      ],
+      "fully_transparent_pixels": 474826,
+      "high_opacity_pixels_alpha_250_255": 1073703,
+      "empty_upper_left_alpha": 0,
+      "bottom_toolbar_alpha": 254,
+      "has_true_alpha_transparency": true
+    },
+    {
+      "file": "08-more-menu.png",
+      "mode": "RGBA",
+      "pixels": [
+        1672,
+        941
+      ],
+      "alpha_extrema": [
+        0,
+        255
+      ],
+      "fully_transparent_pixels": 781127,
+      "high_opacity_pixels_alpha_250_255": 768612,
+      "empty_upper_left_alpha": 0,
+      "bottom_toolbar_alpha": 254,
+      "has_true_alpha_transparency": true
+    }
+  ]
+}

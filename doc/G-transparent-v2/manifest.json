@@ -1,0 +1,127 @@
+{
+  "project": "一起摸鱼 bongo fishing",
+  "date": "2026-11-16",
+  "version": "G-transparent-v2",
+  "generator": "built-in image_gen",
+  "canvas_window": "16:9",
+  "example_window": [
+    480,
+    270
+  ],
+  "image_count": 9,
+  "notes": [
+    "视觉参考，并非功能实现",
+    "原图像素比例有微小取整偏差",
+    "透明留白需要另行实现桌面点击穿透"
+  ],
+  "files": [
+    {
+      "id": "00",
+      "file": "00-transparent-main.png",
+      "title": "透明主界面 · 鱼获提示",
+      "desc": "背景留白透明，底栏与鱼获卡保留实体底色；青绿水面、自然绿荷叶与粉色荷花。",
+      "source": "C:\\Users\\63245\\.codex\\generated_images\\01a1e003-a503-71f3-a0e2-4a6397148045\\exec-75f7adb2-29bd-4c34-a61d-34cac88a6a0d.png",
+      "bytes": 1255256,
+      "pixels": [
+        1672,
+        941
+      ]
+    },
+    {
+      "id": "01",
+      "file": "01-mode-menu.png",
+      "title": "模式选择",
+      "desc": "三种玩法入口，展开后选择；是否可并行仍由玩法专题确定。",
+      "source": "C:\\Users\\63245\\.codex\\generated_images\\01a1e003-a503-71f3-a0e2-4a6397148045\\exec-960a00c1-431b-4a22-94f3-1a6510423fac.png",
+      "bytes": 1107011,
+      "pixels": [
+        1672,
+        941
+      ]
+    },
+    {
+      "id": "02",
+      "file": "02-friends-room.png",
+      "title": "房间好友",
+      "desc": "成员列表、邀请与离开入口；示例成员数量不是房间上限。",
+      "source": "C:\\Users\\63245\\.codex\\generated_images\\01a1e003-a503-71f3-a0e2-4a6397148045\\exec-6ddbc543-9f49-4587-9604-4677c429afe1.png",
+      "bytes": 1416949,
+      "pixels": [
+        1671,
+        941
+      ]
+    },
+    {
+      "id": "03",
+      "file": "03-fish-basket.png",
+      "title": "鱼篓",
+      "desc": "鱼获选择后可出售或放入收藏；售价保持待定。",
+      "source": "C:\\Users\\63245\\.codex\\generated_images\\01a1e003-a503-71f3-a0e2-4a6397148045\\exec-09b0a343-1190-46c0-9f93-f3e2c983746a.png",
+      "bytes": 1589482,
+      "pixels": [
+        1672,
+        941
+      ]
+    },
+    {
+      "id": "04",
+      "file": "04-collection-room.png",
+      "title": "收藏室",
+      "desc": "鱼缸选择、背景预览与管理入口，容量和购买价格未定。",
+      "source": "C:\\Users\\63245\\.codex\\generated_images\\01a1e003-a503-71f3-a0e2-4a6397148045\\exec-34135c7a-07e6-4026-b393-5f12759ba5a4.png",
+      "bytes": 1603708,
+      "pixels": [
+        1671,
+        941
+      ]
+    },
+    {
+      "id": "05",
+      "file": "05-fish-records.png",
+      "title": "图鉴记录",
+      "desc": "鱼种缩略图与最大尺寸记录，缩略图不代表真实比例。",
+      "source": "C:\\Users\\63245\\.codex\\generated_images\\01a1e003-a503-71f3-a0e2-4a6397148045\\exec-39d7f313-5f82-4a4a-bba1-6b14a95756fe.png",
+      "bytes": 1562347,
+      "pixels": [
+        1671,
+        941
+      ]
+    },
+    {
+      "id": "06",
+      "file": "06-skin-draw.png",
+      "title": "皮肤抽取",
+      "desc": "四类外观与鱼竿预览，抽取消耗和概率尚未定。",
+      "source": "C:\\Users\\63245\\.codex\\generated_images\\01a1e003-a503-71f3-a0e2-4a6397148045\\exec-c1f5f29e-dca5-493e-858d-eb2d0a7f86e6.png",
+      "bytes": 1696898,
+      "pixels": [
+        1671,
+        941
+      ]
+    },
+    {
+      "id": "07",
+      "file": "07-settings.png",
+      "title": "设置",
+      "desc": "置顶、透明区穿透、静音和后台输入的状态示意。",
+      "source": "C:\\Users\\63245\\.codex\\generated_images\\01a1e003-a503-71f3-a0e2-4a6397148045\\exec-6b1cea82-004e-4c22-bef9-03a7cc9a7850.png",
+      "bytes": 1397634,
+      "pixels": [
+        1672,
+        941
+      ]
+    },
+    {
+      "id": "08",
+      "file": "08-more-menu.png",
+      "title": "更多菜单",
+      "desc": "皮肤与设置入口；卡片不透明，卡片外继续透明。",
+      "source": "C:\\Users\\63245\\.codex\\generated_images\\01a1e003-a503-71f3-a0e2-4a6397148045\\exec-78ec1837-6e2b-413e-a04a-6fb20f046dcd.png",
+      "bytes": 1099322,
+      "pixels": [
+        1672,
+        941
+      ]
+    }
+  ]
+}
