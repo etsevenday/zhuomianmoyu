@@ -1,0 +1,167 @@
+{
+  "PriceRows": [
+    {
+      "FishId": "TMP_F001",
+      "MinMm": 60,
+      "MaxMm": 100,
+      "Base": 16,
+      "HalfSpan": 4,
+      "MinPrice": 12,
+      "MidPrice": 16,
+      "MaxPrice": 20,
+      "MeanPrice": 16
+    },
+    {
+      "FishId": "TMP_F002",
+      "MinMm": 120,
+      "MaxMm": 200,
+      "Base": 24,
+      "HalfSpan": 6,
+      "MinPrice": 18,
+      "MidPrice": 24,
+      "MaxPrice": 30,
+      "MeanPrice": 24
+    },
+    {
+      "FishId": "TMP_F003",
+      "MinMm": 240,
+      "MaxMm": 400,
+      "Base": 60,
+      "HalfSpan": 15,
+      "MinPrice": 45,
+      "MidPrice": 60,
+      "MaxPrice": 75,
+      "MeanPrice": 60
+    },
+    {
+      "FishId": "TMP_F101",
+      "MinMm": 450,
+      "MaxMm": 650,
+      "Base": 150,
+      "HalfSpan": 30,
+      "MinPrice": 120,
+      "MidPrice": 150,
+      "MaxPrice": 180,
+      "MeanPrice": 150
+    },
+    {
+      "FishId": "TMP_F201",
+      "MinMm": 600,
+      "MaxMm": 900,
+      "Base": 150,
+      "HalfSpan": 30,
+      "MinPrice": 120,
+      "MidPrice": 150,
+      "MaxPrice": 180,
+      "MeanPrice": 150
+    },
+    {
+      "FishId": "TMP_F301",
+      "MinMm": 900,
+      "MaxMm": 1300,
+      "Base": 150,
+      "HalfSpan": 30,
+      "MinPrice": 120,
+      "MidPrice": 150,
+      "MaxPrice": 180,
+      "MeanPrice": 150
+    }
+  ],
+  "Maps": [
+    {
+      "Map": "M1",
+      "MeanPrice": 31.600000000000016,
+      "ExpectedFishToFirstDraw": 4.0979105361607,
+      "Scenarios": [
+        {
+          "InputsPerMinute": 60,
+          "LureCoinsPerHour": 151.68000000000006,
+          "WadeCoinsPerHour": 127.44421879468618,
+          "LureFirstDrawMinutes": 51.22388170200875,
+          "WadeFirstDrawMinutes": 60.96501237986831
+        },
+        {
+          "InputsPerMinute": 120,
+          "LureCoinsPerHour": 303.3600000000001,
+          "WadeCoinsPerHour": 254.88843758937236,
+          "LureFirstDrawMinutes": 25.611940851004373,
+          "WadeFirstDrawMinutes": 30.482506189934156
+        },
+        {
+          "InputsPerMinute": 240,
+          "LureCoinsPerHour": 606.7200000000003,
+          "WadeCoinsPerHour": 509.7768751787447,
+          "LureFirstDrawMinutes": 12.805970425502187,
+          "WadeFirstDrawMinutes": 15.241253094967078
+        }
+      ]
+    },
+    {
+      "Map": "M2",
+      "MeanPrice": 31.600000000000005,
+      "ExpectedFishToFirstDraw": 4.0979105361607,
+      "Scenarios": [
+        {
+          "InputsPerMinute": 60,
+          "LureCoinsPerHour": 151.68,
+          "WadeCoinsPerHour": 127.44421879468614,
+          "LureFirstDrawMinutes": 51.22388170200875,
+          "WadeFirstDrawMinutes": 60.96501237986831
+        },
+        {
+          "InputsPerMinute": 120,
+          "LureCoinsPerHour": 303.36,
+          "WadeCoinsPerHour": 254.88843758937227,
+          "LureFirstDrawMinutes": 25.611940851004373,
+          "WadeFirstDrawMinutes": 30.482506189934156
+        },
+        {
+          "InputsPerMinute": 240,
+          "LureCoinsPerHour": 606.72,
+          "WadeCoinsPerHour": 509.77687517874455,
+          "LureFirstDrawMinutes": 12.805970425502187,
+          "WadeFirstDrawMinutes": 15.241253094967078
+        }
+      ]
+    },
+    {
+      "Map": "M3",
+      "MeanPrice": 31.599999999999994,
+      "ExpectedFishToFirstDraw": 4.0979105361607,
+      "Scenarios": [
+        {
+          "InputsPerMinute": 60,
+          "LureCoinsPerHour": 151.67999999999998,
+          "WadeCoinsPerHour": 127.4442187946861,
+          "LureFirstDrawMinutes": 51.22388170200875,
+          "WadeFirstDrawMinutes": 60.96501237986831
+        },
+        {
+          "InputsPerMinute": 120,
+          "LureCoinsPerHour": 303.35999999999996,
+          "WadeCoinsPerHour": 254.8884375893722,
+          "LureFirstDrawMinutes": 25.611940851004373,
+          "WadeFirstDrawMinutes": 30.482506189934156
+        },
+        {
+          "InputsPerMinute": 240,
+          "LureCoinsPerHour": 606.7199999999999,
+          "WadeCoinsPerHour": 509.7768751787444,
+          "LureFirstDrawMinutes": 12.805970425502187,
+          "WadeFirstDrawMinutes": 15.241253094967078
+        }
+      ]
+    }
+  ],
+  "Gacha": {
+    "ExpectedDraws": 25.462480709876544,
+    "ExpectedDuplicates": 13.462480709876544,
+    "ExpectedNetCoins": 2276.998456790124,
+    "MaxDraws": 56,
+    "MaxDuplicates": 44,
+    "MaxNetCoins": 4720
+  },
+  "Checks": "All species enumerated per mm: prices monotonic, min/mid/max exact, mean equals base; all maps mean31.6.",
+  "DecisionStatus": "按用户委托跨专题协调设定；经济、地图、总策划均已复核；非用户逐项点选金额",
+  "Assumptions": "2026-11-16；按六鱼已定毫米范围及权重枚举；首抽测算假设全部出售、恒定有效输入、无暂停且空周期起步；期望不保证时长。"
+}

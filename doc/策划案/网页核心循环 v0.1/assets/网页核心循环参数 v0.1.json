@@ -1,0 +1,444 @@
+{
+  "schema_version": 1,
+  "rules_version": "web_core_0.1",
+  "content_version": "tmp_fish_0.1",
+  "price_rule_version": "relative_size_0.1",
+  "date": "2026-11-16",
+  "document_only": true,
+  "implementation_status": "策划交接，尚未修改源码",
+  "decision_sources": {
+    "direct_user_choices": [
+      "节点/归零",
+      "输入口径",
+      "初始1缸20条/鱼篓无游戏条数上限",
+      "各地图各玩法记住次数",
+      "12款重复抽取/返20/四连重复后下抽必新",
+      "六种临时鱼池"
+    ],
+    "delegated_coordination": "售价及首版售卖规则按用户要求跨会话重设，三专题复核；非用户逐项点选金额"
+  },
+  "input": {
+    "scope": "页面实际收到的游戏UI以外真实工作输入",
+    "physical_keydown_count": 1,
+    "auto_repeat_counts": false,
+    "composition_commit_additional_counts": false,
+    "combination_keys_count_individually": true,
+    "mouse_click_count": 1,
+    "mouse_buttons": [
+      "primary",
+      "middle",
+      "secondary"
+    ],
+    "mouse_move_or_scroll_counts": false,
+    "ui_and_drag_counts": false,
+    "time_merge_window_ms": 0,
+    "extra_rate_cap": null,
+    "store_typed_text": false
+  },
+  "progress": {
+    "group_keys": [
+      "mode_id",
+      "map_id"
+    ],
+    "preserve_on_switch": true,
+    "restore_on_refresh": true,
+    "lifetime_input_initial": 0,
+    "lifetime_reset_on_catch": false,
+    "collapsed_accepts_eligible_page_input": true,
+    "closed_accepts_input": false,
+    "retroactive_web_external_input": false
+  },
+  "capture": {
+    "lure": {
+      "random_nodes": [
+        500
+      ],
+      "node_probability": 0.5,
+      "guaranteed_node": 1000,
+      "reset_current_group_on_success": true
+    },
+    "wade": {
+      "random_nodes": [
+        200,
+        400,
+        600,
+        800,
+        1000,
+        1200,
+        1400,
+        1600,
+        1800
+      ],
+      "node_probability": 0.2,
+      "guaranteed_node": 2000,
+      "reset_current_group_on_success": true
+    },
+    "pole": {
+      "baseline_interval_ms": 1800000,
+      "timer_policy_status": "有效时长/睡眠/离线单独收敛，本轮不接完整计时",
+      "advances_active_mode_progress": false
+    },
+    "fish_per_success": 1,
+    "extra_success_qte": false
+  },
+  "collection": {
+    "initial_tank_count": 1,
+    "initial_tank_capacity_count": 20,
+    "fish_capacity_cost_each": 1,
+    "basket_game_count_limit": null,
+    "on_tank_full": "保持鱼篓归属，不自动卖/丢",
+    "additional_tank_purchase_status": "另定"
+  },
+  "wallet": {
+    "currency_count": 1,
+    "initial_balance": 0,
+    "integer_only": true,
+    "real_money": false
+  },
+  "sale": {
+    "source": "仅本人鱼篓；收藏先取回",
+    "single_and_explicit_multi_select": true,
+    "confirmation_required": true,
+    "post_sale_undo": false,
+    "atomic_remove_fish_and_credit": true,
+    "price_formula": "R=b-a; d=2L-a-b; q=floor((2H*abs(d)+R)/(2R)); price=B+sign(d)*q",
+    "units": {
+      "L_a_b": "integer millimeters",
+      "B_H_price": "integer game coins"
+    },
+    "rounding": "价格偏移到最近整数，恰半币远离0；sign(0)=0",
+    "invalid_length": "拒绝报价/保留资产，不自动夹到最高价",
+    "skins_affect_price": false
+  },
+  "fish_definitions": [
+    {
+      "id": "TMP_F001",
+      "map_ids": [
+        "map1",
+        "map2",
+        "map3"
+      ],
+      "capture_modes": [
+        "lure",
+        "wade"
+      ],
+      "future_pole_same_pool": true,
+      "length_min_mm": 60,
+      "length_max_mm": 100,
+      "length_step_mm": 1,
+      "length_distribution": "inclusive_discrete_uniform",
+      "species_weight": 40,
+      "price_base": 16,
+      "price_half_span": 4,
+      "price_min": 12,
+      "price_max": 20,
+      "display_name_status": "交文案策划定"
+    },
+    {
+      "id": "TMP_F002",
+      "map_ids": [
+        "map1",
+        "map2",
+        "map3"
+      ],
+      "capture_modes": [
+        "lure",
+        "wade"
+      ],
+      "future_pole_same_pool": true,
+      "length_min_mm": 120,
+      "length_max_mm": 200,
+      "length_step_mm": 1,
+      "length_distribution": "inclusive_discrete_uniform",
+      "species_weight": 40,
+      "price_base": 24,
+      "price_half_span": 6,
+      "price_min": 18,
+      "price_max": 30,
+      "display_name_status": "交文案策划定"
+    },
+    {
+      "id": "TMP_F003",
+      "map_ids": [
+        "map1",
+        "map2",
+        "map3"
+      ],
+      "capture_modes": [
+        "lure",
+        "wade"
+      ],
+      "future_pole_same_pool": true,
+      "length_min_mm": 240,
+      "length_max_mm": 400,
+      "length_step_mm": 1,
+      "length_distribution": "inclusive_discrete_uniform",
+      "species_weight": 16,
+      "price_base": 60,
+      "price_half_span": 15,
+      "price_min": 45,
+      "price_max": 75,
+      "display_name_status": "交文案策划定"
+    },
+    {
+      "id": "TMP_F101",
+      "map_ids": [
+        "map1"
+      ],
+      "capture_modes": [
+        "lure",
+        "wade"
+      ],
+      "future_pole_same_pool": true,
+      "length_min_mm": 450,
+      "length_max_mm": 650,
+      "length_step_mm": 1,
+      "length_distribution": "inclusive_discrete_uniform",
+      "species_weight": 4,
+      "price_base": 150,
+      "price_half_span": 30,
+      "price_min": 120,
+      "price_max": 180,
+      "display_name_status": "交文案策划定"
+    },
+    {
+      "id": "TMP_F201",
+      "map_ids": [
+        "map2"
+      ],
+      "capture_modes": [
+        "lure",
+        "wade"
+      ],
+      "future_pole_same_pool": true,
+      "length_min_mm": 600,
+      "length_max_mm": 900,
+      "length_step_mm": 1,
+      "length_distribution": "inclusive_discrete_uniform",
+      "species_weight": 4,
+      "price_base": 150,
+      "price_half_span": 30,
+      "price_min": 120,
+      "price_max": 180,
+      "display_name_status": "交文案策划定"
+    },
+    {
+      "id": "TMP_F301",
+      "map_ids": [
+        "map3"
+      ],
+      "capture_modes": [
+        "lure",
+        "wade"
+      ],
+      "future_pole_same_pool": true,
+      "length_min_mm": 900,
+      "length_max_mm": 1300,
+      "length_step_mm": 1,
+      "length_distribution": "inclusive_discrete_uniform",
+      "species_weight": 4,
+      "price_base": 150,
+      "price_half_span": 30,
+      "price_min": 120,
+      "price_max": 180,
+      "display_name_status": "交文案策划定"
+    }
+  ],
+  "map_pools": [
+    {
+      "map_id": "map1",
+      "internal_alias": "M1",
+      "entries": [
+        {
+          "fish_id": "TMP_F001",
+          "weight": 40
+        },
+        {
+          "fish_id": "TMP_F002",
+          "weight": 40
+        },
+        {
+          "fish_id": "TMP_F003",
+          "weight": 16
+        },
+        {
+          "fish_id": "TMP_F101",
+          "weight": 4
+        }
+      ]
+    },
+    {
+      "map_id": "map2",
+      "internal_alias": "M2",
+      "entries": [
+        {
+          "fish_id": "TMP_F001",
+          "weight": 40
+        },
+        {
+          "fish_id": "TMP_F002",
+          "weight": 40
+        },
+        {
+          "fish_id": "TMP_F003",
+          "weight": 16
+        },
+        {
+          "fish_id": "TMP_F201",
+          "weight": 4
+        }
+      ]
+    },
+    {
+      "map_id": "map3",
+      "internal_alias": "M3",
+      "entries": [
+        {
+          "fish_id": "TMP_F001",
+          "weight": 40
+        },
+        {
+          "fish_id": "TMP_F002",
+          "weight": 40
+        },
+        {
+          "fish_id": "TMP_F003",
+          "weight": 16
+        },
+        {
+          "fish_id": "TMP_F301",
+          "weight": 4
+        }
+      ]
+    }
+  ],
+  "gacha": {
+    "pool_id": "web_skin_pool_01",
+    "pool_version": 1,
+    "draw_cost": 100,
+    "minimum_balance_before_draw": 100,
+    "unlockable_count": 12,
+    "ordinary_pool_includes_owned": true,
+    "ordinary_weight_each": 1,
+    "duplicate_refund": 20,
+    "duplicate_streak_initial": 0,
+    "pity_when_streak_before_draw_at_least": 4,
+    "pity_pool": "current_unowned_uniform",
+    "on_new_reset_streak": true,
+    "on_duplicate_increment_streak": true,
+    "all_owned_disables_charging": true,
+    "auto_equip": false,
+    "atomic_cost_result_refund_and_streak": true,
+    "browse_category_changes_draw_pool": false
+  },
+  "skins": {
+    "default_owned": [
+      "BASE_CHAR",
+      "BASE_ROD",
+      "BASE_GLOVE",
+      "BASE_SCENE"
+    ],
+    "unlockables": [
+      {
+        "id": "WEB_CHAR_01",
+        "category": "CHAR",
+        "ordinary_weight": 1,
+        "display_name_status": "交文案策划定"
+      },
+      {
+        "id": "WEB_CHAR_02",
+        "category": "CHAR",
+        "ordinary_weight": 1,
+        "display_name_status": "交文案策划定"
+      },
+      {
+        "id": "WEB_CHAR_03",
+        "category": "CHAR",
+        "ordinary_weight": 1,
+        "display_name_status": "交文案策划定"
+      },
+      {
+        "id": "WEB_ROD_01",
+        "category": "ROD",
+        "ordinary_weight": 1,
+        "display_name_status": "交文案策划定"
+      },
+      {
+        "id": "WEB_ROD_02",
+        "category": "ROD",
+        "ordinary_weight": 1,
+        "display_name_status": "交文案策划定"
+      },
+      {
+        "id": "WEB_ROD_03",
+        "category": "ROD",
+        "ordinary_weight": 1,
+        "display_name_status": "交文案策划定"
+      },
+      {
+        "id": "WEB_GLOVE_01",
+        "category": "GLOVE",
+        "ordinary_weight": 1,
+        "display_name_status": "交文案策划定"
+      },
+      {
+        "id": "WEB_GLOVE_02",
+        "category": "GLOVE",
+        "ordinary_weight": 1,
+        "display_name_status": "交文案策划定"
+      },
+      {
+        "id": "WEB_GLOVE_03",
+        "category": "GLOVE",
+        "ordinary_weight": 1,
+        "display_name_status": "交文案策划定"
+      },
+      {
+        "id": "WEB_SCENE_01",
+        "category": "SCENE",
+        "ordinary_weight": 1,
+        "display_name_status": "交文案策划定"
+      },
+      {
+        "id": "WEB_SCENE_02",
+        "category": "SCENE",
+        "ordinary_weight": 1,
+        "display_name_status": "交文案策划定"
+      },
+      {
+        "id": "WEB_SCENE_03",
+        "category": "SCENE",
+        "ordinary_weight": 1,
+        "display_name_status": "交文案策划定"
+      }
+    ],
+    "equipped_per_category": 1,
+    "cosmetic_only": true,
+    "changes_fish_pool_or_collision": false
+  },
+  "asset_storage": {
+    "versioned": true,
+    "silent_failures_allowed": false,
+    "operation_idempotency_required": true,
+    "atomic_transactions_required": true,
+    "cross_browser_cloud_sync": false,
+    "dev_injected_assets_separate": true,
+    "old_sampledata_auto_grant": false,
+    "preserve_existing_temporary_fish": true,
+    "stable_random_context_required": true,
+    "initialize_random_context_before_rewards": true,
+    "random_recovery_keys": [
+      "profile_id",
+      "rules_content_version",
+      "mode_map_cycle_node",
+      "draw_sequence"
+    ]
+  },
+  "open_items": [
+    "完整手竿计时政策",
+    "更多鱼缸购买经济",
+    "PC尺寸Q6/Q7",
+    "Steam/房主权威/迁移/真实多人",
+    "玩家逐字文案"
+  ]
+}
