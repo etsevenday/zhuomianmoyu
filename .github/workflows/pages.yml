@@ -10,6 +10,7 @@ on:
       - 'doc/**'
       - 'AGENTS.md'
       - 'README.md'
+      - 'CLAUDE.md'
       - '.claude/**'
       - 'tools/**'
   workflow_dispatch:

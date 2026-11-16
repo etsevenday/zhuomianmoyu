@@ -21,11 +21,12 @@ src/Core/                纯 C# 内核，不依赖 UnityEngine；同时是一个
 web/Moyu.Core/           .NET 类库，编译 src/Core 的源码
 web/Moyu.Core.Tests/     NUnit：第一阶段可在内核判定的验收（UI、SPACE、CONTENT 等编号）
 web/Moyu.Web/            Blazor WebAssembly 网页壳：模拟桌面、小窗、面板；手势在 wwwroot/js/pet.js
+tools/verify/            浏览器验收脚本（零依赖 Node + CDP），每批一个，对应 doc/测试用例/ 的用例表
 ```
 
 将来接 Unity：在 Unity 工程的 `Packages/manifest.json` 里加 `"com.moyu.core": "file:../../src/Core"`。
 
-本地运行需要 .NET 8 SDK：`dotnet test web/Moyu.sln`；`dotnet run --project web/Moyu.Web --launch-profile http`（http://localhost:5188）。
+本地运行需要 .NET 8 SDK：`dotnet test web/Moyu.sln`；`dotnet run --project web/Moyu.Web --launch-profile http`（http://localhost:5188）。浏览器验收需要 Node 22+ 和 Chrome/Edge：推送前跑 `node tools/verify/b0.mjs --release`（照 CI 发布本地 Release 包再测）；也可给开发服务器网址，不给网址就测线上。
 
 ## 分工
 
@@ -41,6 +42,7 @@ web/Moyu.Web/            Blazor WebAssembly 网页壳：模拟桌面、小窗、
   - `00 总则/02 开发方待确认问题.md`：开发方提问、策划答复的唯一位置；已结案的整节移到 `02a 开发方待确认问题归档.md`。
   - `00 总则/系统策划案模板.md`：新系统策划案照它写。
 - `doc/开发记录/`：开发方每个批次一份记录（工程映射、开发假设、实施记录与偏差、验收结论）。
+- `doc/测试用例/`：开发方每个批次一份用例表（从验收编号推出、写明执行方式、只按真实运行填结果），规则见 [测试用例准则](<doc/测试用例/00 测试用例准则.md>)；开发方工作约定见 [CLAUDE.md](CLAUDE.md)。
 
 ## GitHub 上的提醒
 

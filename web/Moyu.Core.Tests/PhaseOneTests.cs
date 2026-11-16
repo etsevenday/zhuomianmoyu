@@ -11,7 +11,7 @@ public class PhaseOneTests
     private static PetController NewController() =>
         new PetController(new DesktopLayout(), MapCatalog.CreatePlaceholder());
 
-    [Test(Description = "UI-01：1920×1080 时小窗 480×270，16:9")]
+    [Test(Description = "B0-01 UI-01：1920×1080 时小窗 480×270，16:9")]
     public void Window_is_quarter_size_16_9()
     {
         var layout = new DesktopLayout();
@@ -20,7 +20,7 @@ public class PhaseOneTests
         Assert.That(layout.WindowWidth / layout.WindowHeight, Is.EqualTo(16.0 / 9).Within(1e-9));
     }
 
-    [Test(Description = "UI-01/TECH-09：可放在工作区任意位置，拖出去会被夹回，整窗可见")]
+    [Test(Description = "B0-03 UI-01/TECH-09：可放在工作区任意位置，拖出去会被夹回，整窗可见")]
     public void Window_position_is_clamped_into_work_area()
     {
         var c = NewController();
@@ -31,7 +31,7 @@ public class PhaseOneTests
         Assert.That(c.MoveWindow(-50, -50), Is.EqualTo(new WindowPosition(0, 0)));
     }
 
-    [Test(Description = "UI-03：拖动只移动窗口，不改模式、地图、落点")]
+    [Test(Description = "B0-09 UI-03：拖动只移动窗口，不改模式、地图、落点")]
     public void Dragging_window_keeps_mode_map_and_spot()
     {
         var c = NewController();
@@ -44,7 +44,7 @@ public class PhaseOneTests
         Assert.That(c.State.Spot, Is.EqualTo(spot));
     }
 
-    [Test(Description = "01 §2：同一时刻只开一个面板，打开另一个替换，再点同一个关闭")]
+    [Test(Description = "B0-29 01 §2：同一时刻只开一个面板，打开另一个替换，再点同一个关闭")]
     public void Panels_replace_each_other()
     {
         var c = NewController();
@@ -55,7 +55,7 @@ public class PhaseOneTests
         Assert.That(c.State.Panel, Is.EqualTo(Panel.None));
     }
 
-    [Test(Description = "UI-09：收起关掉面板、保持窗口位置，恢复后回原处")]
+    [Test(Description = "B0-32 UI-09：收起关掉面板、保持窗口位置，恢复后回原处")]
     public void Collapse_and_restore_keep_position()
     {
         var c = NewController();
@@ -68,7 +68,7 @@ public class PhaseOneTests
         Assert.That(c.State.Window, Is.EqualTo(new WindowPosition(300, 300)));
     }
 
-    [Test(Description = "收起后拖头像：恢复时小窗跟着头像走")]
+    [Test(Description = "B0-33 收起后拖头像：恢复时小窗跟着头像走")]
     public void Dragging_avatar_moves_window()
     {
         var c = NewController();
@@ -79,7 +79,7 @@ public class PhaseOneTests
         Assert.That(c.State.Window.Y, Is.EqualTo(250).Within(1e-9));
     }
 
-    [Test(Description = "SPACE-01：一进来就被自动安排在当前模式的区域里")]
+    [Test(Description = "B0-15 SPACE-01：一进来就被自动安排在当前模式的区域里")]
     public void Spot_is_arranged_on_start()
     {
         var c = NewController();
@@ -87,7 +87,7 @@ public class PhaseOneTests
         Assert.That(c.CurrentMap.Shore.Contains(c.State.Spot!.Value), Is.True);
     }
 
-    [Test(Description = "09 §2/CONTENT-07：切到摸鱼换到浅水，路亚↔手竿同在岸边则不动")]
+    [Test(Description = "B0-22 09 §2/CONTENT-07：切到摸鱼换到浅水，路亚↔手竿同在岸边则不动")]
     public void Switching_mode_moves_between_shore_and_shallow()
     {
         var c = NewController();
@@ -101,7 +101,7 @@ public class PhaseOneTests
         Assert.That(c.CurrentMap.Shallow.Contains(c.State.Spot!.Value), Is.True);
     }
 
-    [Test(Description = "SPACE-02/UI-13：单击连续区域内的任意点就换到那里")]
+    [Test(Description = "B0-16 SPACE-02/UI-13：单击连续区域内的任意点就换到那里")]
     public void Click_in_area_places_exactly_there()
     {
         var c = NewController();
@@ -113,7 +113,7 @@ public class PhaseOneTests
         }
     }
 
-    [Test(Description = "DEC-14：放不下保留原位，不改投到别处")]
+    [Test(Description = "B0-17 DEC-14：放不下保留原位，不改投到别处")]
     public void No_room_keeps_previous_spot()
     {
         var c = NewController();
@@ -123,7 +123,7 @@ public class PhaseOneTests
         Assert.That(c.State.Spot, Is.EqualTo(before));
     }
 
-    [Test(Description = "不在当前模式区域：天空、路亚时点浅水都不算选位")]
+    [Test(Description = "B0-19 不在当前模式区域：天空、路亚时点浅水都不算选位")]
     public void Click_outside_mode_area_is_ignored()
     {
         var c = NewController();
@@ -135,7 +135,7 @@ public class PhaseOneTests
         Assert.That(c.ClickScene(new ScenePoint(800, 700)), Is.EqualTo(PlaceResult.Placed));
     }
 
-    [Test(Description = "SPACE-04：允许紧挨，但两个占地框不能重叠")]
+    [Test(Description = "B0-20 SPACE-04：允许紧挨，但两个占地框不能重叠")]
     public void Neighbours_may_stand_close_but_not_overlap()
     {
         var map = MapCatalog.CreatePlaceholder().Default;
@@ -151,7 +151,7 @@ public class PhaseOneTests
             .Intersects(SpotPlanner.Footprint(new ScenePoint(map.ShoreAnchorX, map.Shore.CenterY))), Is.False);
     }
 
-    [Test(Description = "CONTENT-02/TECH-14：地图三选一；不认识的地图不切")]
+    [Test(Description = "B0-26 CONTENT-02/TECH-14：地图三选一；不认识的地图不切")]
     public void Map_selection()
     {
         var c = NewController();
@@ -162,7 +162,7 @@ public class PhaseOneTests
         Assert.That(c.State.Spot, Is.Not.Null);
     }
 
-    [Test(Description = "UI-11/TECH-06：穿透默认开、静音默认开；设置可保存恢复")]
+    [Test(Description = "B0-39 UI-11/TECH-06：穿透默认开、静音默认开；设置可保存恢复")]
     public void Prefs_round_trip()
     {
         var c = NewController();
@@ -185,7 +185,7 @@ public class PhaseOneTests
         Assert.That(back.State.Collapsed, Is.True);
     }
 
-    [Test(Description = "05 §6：坏设置逐项回落，窗口能找回")]
+    [Test(Description = "B0-41 05 §6：坏设置逐项回落，窗口能找回")]
     public void Bad_prefs_fall_back()
     {
         var prefs = new PetPrefs { WindowX = 3.5, WindowY = double.NaN, Mode = "Boat", MapId = "gone", HasSpot = true, SpotX = 140, SpotY = 570 };

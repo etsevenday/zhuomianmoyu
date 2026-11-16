@@ -44,6 +44,7 @@ window.moyuPet = (() => {
       sy: e.clientY,
       ox: target ? parseFloat(target.style.left) || 0 : 0,
       oy: target ? parseFloat(target.style.top) || 0 : 0,
+      moved: false,
       dragging: false,
       el: hit,
     };
@@ -60,9 +61,13 @@ window.moyuPet = (() => {
     if (!gesture || e.pointerId !== gesture.id) return;
     const dx = e.clientX - gesture.sx;
     const dy = e.clientY - gesture.sy;
-    if (!gesture.dragging && canDrag(gesture.kind) && Math.hypot(dx, dy) > DRAG_THRESHOLD) {
-      gesture.dragging = true;
-      document.body.classList.add('dragging');
+    if (!gesture.moved && Math.hypot(dx, dy) > DRAG_THRESHOLD) {
+      // 按住移动过就不再是单击：能拖的开始拖窗，岸边等不能拖的松开后什么也不做（B0-11）
+      gesture.moved = true;
+      if (canDrag(gesture.kind)) {
+        gesture.dragging = true;
+        document.body.classList.add('dragging');
+      }
     }
     if (gesture.dragging && gesture.target) {
       const s = scale();
@@ -90,7 +95,7 @@ window.moyuPet = (() => {
       suppressClickUntil = performance.now() + 300;
       return;
     }
-    if (cancelled) return;
+    if (cancelled || g.moved) return;
     if (g.kind === 'avatar') {
       dotnet?.invokeMethodAsync('OnAvatarClicked');
       return;
