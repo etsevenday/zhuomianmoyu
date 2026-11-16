@@ -1,11 +1,11 @@
 {
   "schema_version": 1,
-  "rules_version": "web_core_0.1",
+  "rules_version": "web_core_0.2",
   "content_version": "tmp_fish_0.1",
   "price_rule_version": "relative_size_0.1",
-  "date": "2026-11-16",
+  "date": "2026-11-17",
   "document_only": true,
-  "implementation_status": "策划交接，尚未修改源码",
+  "implementation_status": "B1基线346c499已部署，本次Q新裁定及逐字文案待开发接入；仅策划参数，不改源码",
   "decision_sources": {
     "direct_user_choices": [
       "节点/归零",
@@ -13,7 +13,13 @@
       "初始1缸20条/鱼篓无游戏条数上限",
       "各地图各玩法记住次数",
       "12款重复抽取/返20/四连重复后下抽必新",
-      "六种临时鱼池"
+      "六种临时鱼池",
+      "Q8手竿30分钟有效计时/按图保存/无离线补算",
+      "Q9未知鱼仅？且无出处",
+      "Q10卡片加鱼篓新鱼数量",
+      "Q11原画幅底层鱼缸/默认不设",
+      "Q12开发制作六鱼16外观占位",
+      "Q5/Q13用户授权总控补齐设计文案并归档推送"
     ],
     "delegated_coordination": "售价及首版售卖规则按用户要求跨会话重设，三专题复核；非用户逐项点选金额"
   },
@@ -75,8 +81,27 @@
     },
     "pole": {
       "baseline_interval_ms": 1800000,
-      "timer_policy_status": "有效时长/睡眠/离线单独收敛，本轮不接完整计时",
-      "advances_active_mode_progress": false
+      "timer_policy_status": "已由Q8确认，本轮接通，详见05 §1.1",
+      "advances_active_mode_progress": false,
+      "enabled": true,
+      "timer_group_keys": [
+        "mode_id",
+        "map_id"
+      ],
+      "initial_elapsed_ms": 0,
+      "elapsed_remainder_max_ms": 1799999,
+      "carry_remainder": true,
+      "hidden_or_minimized_counts": true,
+      "collapsed_counts": true,
+      "closed_counts": false,
+      "offline_catchup": false,
+      "check_gap_exclusion_ms": 300000,
+      "exclude_only_if_strictly_greater": true,
+      "excluded_gap_credit_ms": 0,
+      "readonly_page_produces_fish": false,
+      "old_profile_initial_elapsed_ms": 0,
+      "common_pool": true,
+      "input_accelerates_timer": false
     },
     "fish_per_success": 1,
     "extra_success_qte": false
@@ -87,7 +112,18 @@
     "fish_capacity_cost_each": 1,
     "basket_game_count_limit": null,
     "on_tank_full": "保持鱼篓归属，不自动卖/丢",
-    "additional_tank_purchase_status": "另定"
+    "additional_tank_purchase_status": "另定",
+    "background_initially_set": false,
+    "background_layer": "游戏内部最底层，钓鱼场景/角色/UI覆盖其上",
+    "background_logical_bounds": {
+      "height": 900,
+      "width": 1600
+    },
+    "background_clip_to_original_bounds": true,
+    "background_pointer_events": false,
+    "background_frame_inside_bounds": true,
+    "background_opaque_rectangle_fill": false,
+    "background_uniform_length_scale": true
   },
   "wallet": {
     "currency_count": 1,
@@ -120,9 +156,9 @@
       ],
       "capture_modes": [
         "lure",
-        "wade"
+        "wade",
+        "pole"
       ],
-      "future_pole_same_pool": true,
       "length_min_mm": 60,
       "length_max_mm": 100,
       "length_step_mm": 1,
@@ -132,7 +168,10 @@
       "price_half_span": 4,
       "price_min": 12,
       "price_max": 20,
-      "display_name_status": "交文案策划定"
+      "display_name_status": "本轮定稿，见文案交接03",
+      "pole_same_pool": true,
+      "display_name": "银白小鱼",
+      "description": "银白的细身小鱼，摆着短短的圆尾。"
     },
     {
       "id": "TMP_F002",
@@ -143,9 +182,9 @@
       ],
       "capture_modes": [
         "lure",
-        "wade"
+        "wade",
+        "pole"
       ],
-      "future_pole_same_pool": true,
       "length_min_mm": 120,
       "length_max_mm": 200,
       "length_step_mm": 1,
@@ -155,7 +194,10 @@
       "price_half_span": 6,
       "price_min": 18,
       "price_max": 30,
-      "display_name_status": "交文案策划定"
+      "display_name_status": "本轮定稿，见文案交接03",
+      "pole_same_pool": true,
+      "display_name": "青圆点鱼",
+      "description": "青绿的圆身上，留着一枚醒目的大圆点。"
     },
     {
       "id": "TMP_F003",
@@ -166,9 +208,9 @@
       ],
       "capture_modes": [
         "lure",
-        "wade"
+        "wade",
+        "pole"
       ],
-      "future_pole_same_pool": true,
       "length_min_mm": 240,
       "length_max_mm": 400,
       "length_step_mm": 1,
@@ -178,7 +220,10 @@
       "price_half_span": 15,
       "price_min": 45,
       "price_max": 75,
-      "display_name_status": "交文案策划定"
+      "display_name_status": "本轮定稿，见文案交接03",
+      "pole_same_pool": true,
+      "display_name": "金扇尾鱼",
+      "description": "淡金的修长鱼身，拖着宽宽的扇形尾巴。"
     },
     {
       "id": "TMP_F101",
@@ -187,9 +232,9 @@
       ],
       "capture_modes": [
         "lure",
-        "wade"
+        "wade",
+        "pole"
       ],
-      "future_pole_same_pool": true,
       "length_min_mm": 450,
       "length_max_mm": 650,
       "length_step_mm": 1,
@@ -199,7 +244,10 @@
       "price_half_span": 30,
       "price_min": 120,
       "price_max": 180,
-      "display_name_status": "交文案策划定"
+      "display_name_status": "本轮定稿，见文案交接03",
+      "pole_same_pool": true,
+      "display_name": "荷叶尾鱼",
+      "description": "尾巴像一片小叶子，鳍尖透着柔粉色。"
     },
     {
       "id": "TMP_F201",
@@ -208,9 +256,9 @@
       ],
       "capture_modes": [
         "lure",
-        "wade"
+        "wade",
+        "pole"
       ],
-      "future_pole_same_pool": true,
       "length_min_mm": 600,
       "length_max_mm": 900,
       "length_step_mm": 1,
@@ -220,7 +268,10 @@
       "price_half_span": 30,
       "price_min": 120,
       "price_max": 180,
-      "display_name_status": "交文案策划定"
+      "display_name_status": "本轮定稿，见文案交接03",
+      "pole_same_pool": true,
+      "display_name": "蓝纹长鱼",
+      "description": "青蓝色的断纹，沿着修长的鱼身排开。"
     },
     {
       "id": "TMP_F301",
@@ -229,9 +280,9 @@
       ],
       "capture_modes": [
         "lure",
-        "wade"
+        "wade",
+        "pole"
       ],
-      "future_pole_same_pool": true,
       "length_min_mm": 900,
       "length_max_mm": 1300,
       "length_step_mm": 1,
@@ -241,7 +292,10 @@
       "price_half_span": 30,
       "price_min": 120,
       "price_max": 180,
-      "display_name_status": "交文案策划定"
+      "display_name_status": "本轮定稿，见文案交接03",
+      "pole_same_pool": true,
+      "display_name": "云纹大鱼",
+      "description": "厚厚的鱼身和大尾巴上，浮着奶黄色的云纹。"
     }
   ],
   "map_pools": [
@@ -343,78 +397,128 @@
         "id": "WEB_CHAR_01",
         "category": "CHAR",
         "ordinary_weight": 1,
-        "display_name_status": "交文案策划定"
+        "display_name_status": "本轮定稿，见文案交接03",
+        "display_name": "草帽背带",
+        "description": "戴上草帽，穿好薄荷色背带裤。"
       },
       {
         "id": "WEB_CHAR_02",
         "category": "CHAR",
         "ordinary_weight": 1,
-        "display_name_status": "交文案策划定"
+        "display_name_status": "本轮定稿，见文案交接03",
+        "display_name": "黄雨衣",
+        "description": "柔黄的连帽雨衣，让水边多一点亮色。"
       },
       {
         "id": "WEB_CHAR_03",
         "category": "CHAR",
         "ordinary_weight": 1,
-        "display_name_status": "交文案策划定"
+        "display_name_status": "本轮定稿，见文案交接03",
+        "display_name": "条纹领巾",
+        "description": "白蓝条纹上衣，配一条蓝色小领巾。"
       },
       {
         "id": "WEB_ROD_01",
         "category": "ROD",
         "ordinary_weight": 1,
-        "display_name_status": "交文案策划定"
+        "display_name_status": "本轮定稿，见文案交接03",
+        "display_name": "薄荷竿",
+        "description": "薄荷色竿身，搭配奶油色握柄。"
       },
       {
         "id": "WEB_ROD_02",
         "category": "ROD",
         "ordinary_weight": 1,
-        "display_name_status": "交文案策划定"
+        "display_name_status": "本轮定稿，见文案交接03",
+        "display_name": "竹节竿",
+        "description": "竹节纹样的竿身，缠着一小段红线。"
       },
       {
         "id": "WEB_ROD_03",
         "category": "ROD",
         "ordinary_weight": 1,
-        "display_name_status": "交文案策划定"
+        "display_name_status": "本轮定稿，见文案交接03",
+        "display_name": "金环竿",
+        "description": "深蓝竿身点缀金环，竿尖添上一抹亮色。"
       },
       {
         "id": "WEB_GLOVE_01",
         "category": "GLOVE",
         "ordinary_weight": 1,
-        "display_name_status": "交文案策划定"
+        "display_name_status": "本轮定稿，见文案交接03",
+        "display_name": "黄胶手套",
+        "description": "柔黄的手套，收在奶白色袖口里。"
       },
       {
         "id": "WEB_GLOVE_02",
         "category": "GLOVE",
         "ordinary_weight": 1,
-        "display_name_status": "交文案策划定"
+        "display_name_status": "本轮定稿，见文案交接03",
+        "display_name": "叶纹手套",
+        "description": "自然绿色的手套，印着几片简洁的叶纹。"
       },
       {
         "id": "WEB_GLOVE_03",
         "category": "GLOVE",
         "ordinary_weight": 1,
-        "display_name_status": "交文案策划定"
+        "display_name_status": "本轮定稿，见文案交接03",
+        "display_name": "深蓝手套",
+        "description": "深蓝手套配橙色边线，掌面添上防滑纹样。"
       },
       {
         "id": "WEB_SCENE_01",
         "category": "SCENE",
         "ordinary_weight": 1,
-        "display_name_status": "交文案策划定"
+        "display_name_status": "本轮定稿，见文案交接03",
+        "display_name": "暖灯",
+        "description": "水边亮起几盏小灯，添一点暖光。"
       },
       {
         "id": "WEB_SCENE_02",
         "category": "SCENE",
         "ordinary_weight": 1,
-        "display_name_status": "交文案策划定"
+        "display_name_status": "本轮定稿，见文案交接03",
+        "display_name": "细雨",
+        "description": "细细的雨线落下，水面泛起小小涟漪。"
       },
       {
         "id": "WEB_SCENE_03",
         "category": "SCENE",
         "ordinary_weight": 1,
-        "display_name_status": "交文案策划定"
+        "display_name_status": "本轮定稿，见文案交接03",
+        "display_name": "月光",
+        "description": "青色月光和几点微亮装饰，轻轻落在场景里。"
       }
     ],
     "equipped_per_category": 1,
     "cosmetic_only": true,
-    "changes_fish_pool_or_collision": false
+    "changes_fish_pool_or_collision": false,
+    "default_definitions": [
+      {
+        "display_name": "默认",
+        "id": "BASE_CHAR",
+        "description": "保留伙伴原本的模样，轻轻松松坐在水边。",
+        "display_name_status": "本轮定稿，见文案交接03"
+      },
+      {
+        "display_name": "默认",
+        "id": "BASE_ROD",
+        "description": "熟悉的鱼竿，搭配基础配色和握柄。",
+        "display_name_status": "本轮定稿，见文案交接03"
+      },
+      {
+        "display_name": "默认",
+        "id": "BASE_GLOVE",
+        "description": "简洁的基础手套，陪伙伴一起探探水。",
+        "display_name_status": "本轮定稿，见文案交接03"
+      },
+      {
+        "display_name": "默认",
+        "id": "BASE_SCENE",
+        "description": "保留当前地图原本的光线与装饰。",
+        "display_name_status": "本轮定稿，见文案交接03"
+      }
+    ]
   },
   "asset_storage": {
     "versioned": true,
@@ -435,10 +539,49 @@
     ]
   },
   "open_items": [
-    "完整手竿计时政策",
     "更多鱼缸购买经济",
-    "PC尺寸Q6/Q7",
+    "原生PC实现（窗口尺寸已按Q6/Q7答复）",
     "Steam/房主权威/迁移/真实多人",
-    "玩家逐字文案"
-  ]
+    "云同步与扩展图鉴"
+  ],
+  "records": {
+    "species_total": 6,
+    "unknown_show_name": false,
+    "unknown_text": "？",
+    "discovered_fields": [
+      "name",
+      "appearance",
+      "max_length_mm",
+      "catch_count",
+      "first_caught_at"
+    ],
+    "retain_after_sale_or_collection": true,
+    "per_catch_history": false,
+    "show_count": true,
+    "unknown_show_shape": false,
+    "unknown_show_map_hint": false
+  },
+  "catch_notice": {
+    "restore_unread_on_refresh": true,
+    "automatic_sound": false,
+    "opening_basket_acknowledges_displayed": true,
+    "unread_initial": 0,
+    "card_duration_ms": 4000,
+    "reset_card_timeout_on_new_confirmed_catch": true,
+    "only_committed_catches": true,
+    "card_expiry_clears_unread": false,
+    "steals_focus": false,
+    "basket_unread_enabled": true,
+    "retroactive_mark_old_fish": false,
+    "merge_while_card_visible": true,
+    "card_enabled": true
+  },
+  "copy": {
+    "fish_names": 6,
+    "authority": "用户明确授权总控补齐缺失设计文案并归档推送；不冒充shioko0315确认",
+    "source": "文案交接 v0.1/03 B0-B1界面文案定稿.md",
+    "skin_names_and_descriptions": 16,
+    "unknown_fish_text": "？",
+    "status": "本轮逐字定稿"
+  }
 }
