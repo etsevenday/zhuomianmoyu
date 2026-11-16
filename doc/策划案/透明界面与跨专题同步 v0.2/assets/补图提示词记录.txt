@@ -1,0 +1,17 @@
+{
+  "tool": "built-in image_gen",
+  "date": "2026-11-16",
+  "transparent_background": true,
+  "edits": [
+    {
+      "id": "08",
+      "file": "08-more-menu-approved.png",
+      "prompt": "Use case: precise-object-edit. Edit the supplied actual transparent game UI screenshot. Preserve the full 16:9 canvas, real alpha transparency outside artwork, green pond, green leaves, pink lotus, character, bottom navigation, separate upper-right floating controls and selected \"更多\" button. Do not add a background, topbar, title or nine-dot grip.\nChange ONLY the opaque \"更多\" popup menu above the bottom-right button: extend its height upward enough to contain THREE large readable rows instead of two, keep cream opaque interior and thick black marker outline. Header \"更多\" and × close. Rows in order: simple landscape icon with \"地图\"; rod/swatch icon with \"皮肤\"; gear icon with \"设置\". All text short bold Chinese, ample spacing. Panel about 140 logical pixels wide by 145 high in 480x270 window. Keep it above bottom bar, not covering character or upper controls. The two original entries stay. No cost, probabilities or extra controls. No global scrim, no black or white backdrop, no checkerboard pixels. This adds the user-confirmed map entry under More; preserve all other pixels as closely as possible."
+    },
+    {
+      "id": "09",
+      "file": "09-map-menu-approved.png",
+      "prompt": "Use case: precise-object-edit / ui-mockup. Edit the supplied actual transparent desktop fishing interface into the map-selection submenu state. Full fixed 16:9 canvas, real alpha0 negative space, opaque scene and cream opaque UI panels. Preserve G thick black marker outlines, taupe otter character, natural jade pond, green lily pads, pink flowers, bottom nav with \"路亚\" \"鱼篓\" \"收藏\" \"记录\" \"更多\", and separate upper-right room/mute/minimize/close controls. No full-width header, no top-left title or nine dots. Remove transient \"新鱼获\" card, restoring alpha behind it.\nAdd ONE opaque cream rounded popup in the right half, between top controls and bottom nav, header \"地图选择\" plus ×. Exactly THREE large horizontal selection rows, each a simple small doodle landscape thumbnail on left, short Chinese placeholder label and check indicator on right: green lotus pond thumbnail \"地图一\" selected chartreuse with check; shallow grey-stone stream thumbnail \"地图二\"; calm pale-blue bay/dock thumbnail \"地图三\". Labels are placeholder copy, not finalized place names. Three thumbnails deliberately distinct but same G style; NOT purple water. Keep thumbnails simple and large, no tiny details. Bottom More selected lilac. Main game background remains pond because first map selected. No unlock costs, locks, numbers besides placeholder names, no rare fish, no fish pool stats or capacity. Opaque panel, real transparent sky outside it."
+    }
+  ]
+}
