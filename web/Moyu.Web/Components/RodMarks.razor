@@ -1,0 +1,29 @@
+@* 鱼竿外观在竿身上的装饰（B1 Q12 假设 A 的占位画法）：竹节、金环；颜色由 Bear 换。 *@
+@switch (Skin)
+{
+    case "WEB_ROD_01":
+        @foreach (var p in Points)
+        {
+            <circle cx="@F(p.X)" cy="@F(p.Y)" r="5" fill="#fbf3e3" />
+        }
+        break;
+    case "WEB_ROD_02":
+        @foreach (var p in Points)
+        {
+            <circle cx="@F(p.X)" cy="@F(p.Y)" r="9" fill="#8a6f2e" />
+        }
+        break;
+    case "WEB_ROD_03":
+        @foreach (var p in Points)
+        {
+            <circle cx="@F(p.X)" cy="@F(p.Y)" r="12" fill="none" stroke="#e8c35a" stroke-width="7" />
+        }
+        break;
+}
+
+@code {
+    [Parameter] public string Skin { get; set; } = "BASE_ROD";
+    [Parameter] public IReadOnlyList<ScenePoint> Points { get; set; } = Array.Empty<ScenePoint>();
+
+    private static string F(double v) => v.ToString("0.###", System.Globalization.CultureInfo.InvariantCulture);
+}

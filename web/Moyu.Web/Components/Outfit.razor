@@ -1,0 +1,26 @@
+@* 人物外观里穿在身上的部分（B1 Q12 假设 A 的占位画法）：画在身体之后、头之前。 *@
+@switch (Skin)
+{
+    case "WEB_CHAR_01":
+        @* 草帽背带：蓝色背带裤 *@
+        <path d="M@(F(Body.X - 28)) @(F(Body.Y - 24)) h96 v100 h-96 Z" fill="#6f9fd6" class="line" stroke-width="6" />
+        <path d="M@(F(Body.X - 22)) @(F(Body.Y - 22)) L@(F(Body.X - 46)) @(F(Body.Y - 92)) M@(F(Body.X + 62)) @(F(Body.Y - 22)) L@(F(Body.X + 64)) @(F(Body.Y - 92))" stroke="#6f9fd6" stroke-width="16" stroke-linecap="round" />
+        <circle cx="@F(Body.X - 14)" cy="@F(Body.Y - 10)" r="7" fill="#f7d94c" class="line" stroke-width="3" />
+        <circle cx="@F(Body.X + 54)" cy="@F(Body.Y - 10)" r="7" fill="#f7d94c" class="line" stroke-width="3" />
+        break;
+    case "WEB_CHAR_02":
+        @* 黄雨衣：罩住整个身子 *@
+        <ellipse cx="@F(Body.X)" cy="@F(Body.Y + 4)" rx="96" ry="104" fill="#f7d94c" class="line" stroke-width="8" />
+        <path d="M@(F(Body.X + 26)) @(F(Body.Y - 90)) V@(F(Body.Y + 96))" class="line" stroke-width="5" />
+        <circle cx="@F(Body.X + 40)" cy="@F(Body.Y - 40)" r="6" fill="#1f1d1a" />
+        <circle cx="@F(Body.X + 40)" cy="@F(Body.Y + 10)" r="6" fill="#1f1d1a" />
+        break;
+}
+
+@code {
+    [Parameter] public string Skin { get; set; } = "BASE_CHAR";
+    [Parameter] public ScenePoint Head { get; set; }
+    [Parameter] public ScenePoint Body { get; set; }
+
+    private static string F(double v) => v.ToString("0.###", System.Globalization.CultureInfo.InvariantCulture);
+}

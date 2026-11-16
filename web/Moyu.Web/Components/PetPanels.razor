@@ -1,6 +1,6 @@
 @* 管理面板（1600×900 设计稿坐标）。同一时刻只开一个（01 §2）；面板是实体，不铺全窗遮罩。
-   第一阶段全是只读布局：出售、收藏、抽取等依赖未定规则的按钮一律不可点，不假装成功（UI-10）。
-   面板里的字【交文案策划定】，B0 Q5 定稿前照效果图占位。 *@
+   鱼篓、收藏、记录、皮肤接玩法档（网页核心循环 v0.1）；按钮只在能做成时可点，存不进就报失败、什么都不变（WA-06）。
+   面板里的字【文案占位，B0 Q5、B1 Q13】。 *@
 @switch (Pet.State.Panel)
 {
     case Panel.ModeMenu:
@@ -25,33 +25,97 @@
         </div>
         break;
 
+    case Panel.Basket when _ledger:
+        <div class="panel solid ledger">
+            <PanelHead Title="账本" OnClose="Close" />
+            <div class="ledger-list">
+                @if (Ledger.Count == 0)
+                {
+                    <div class="empty">还没有收支</div>
+                }
+                @foreach (var e in Ledger)
+                {
+                    <div class="ledger-row" data-kind="@e.Kind" data-delta="@e.Delta" data-balance="@e.BalanceAfter">
+                        <span class="time">@Texts.Time(e.AtMs)</span>
+                        <span class="kind">@KindName(e.Kind)</span>
+                        <span class="what">@LedgerWhat(e)</span>
+                        <span class="delta @(e.Delta < 0 ? "minus" : "")">@(e.Delta >= 0 ? "+" : "")@e.Delta</span>
+                        <span class="bal">余 @e.BalanceAfter</span>
+                    </div>
+                }
+            </div>
+            <div class="panel-actions">
+                <button class="btn" @onclick="() => _ledger = false">返回鱼篓</button>
+            </div>
+        </div>
+        break;
+
     case Panel.Basket:
         <div class="panel solid basket">
             <PanelHead Title="鱼篓" OnClose="Close" />
+            <div class="wallet" data-stat="basket-coins" title="金币 @Coins"><span class="coin"></span>@Coins</div>
             <div class="panel-body split">
                 <div class="fish-list">
-                    @foreach (var f in Session.Basket)
+                    @if (Basket.Count == 0)
                     {
-                        <button class="fish-cell @(f.Id == Session.SelectedFishId ? "on" : "")" @onclick="() => Select(f.Id)">
-                            <svg viewBox="-60 -40 120 80"><Fish Look="f.Look" Length="100" /></svg>
-                        </button>
+                        <div class="empty">鱼篓是空的</div>
+                    }
+                    @foreach (var f in Basket)
+                    {
+                        var on = f.Id == Session.FocusFishId;
+                        var tick = Session.Checked.Contains(f.Id);
+                        <div class="fish-cell @(on ? "on" : "")" data-fish="@f.Id">
+                            <button class="pick" title="@Texts.FishName(f.SpeciesId)" @onclick="() => Session.FocusFishId = f.Id">
+                                <svg viewBox="-60 -40 120 80"><Fish Species="@f.SpeciesId" Length="100" /></svg>
+                                <span class="len">@Texts.Cm(f.LengthMm)</span>
+                            </button>
+                            <button class="tick @(tick ? "on" : "")" title="多选" aria-pressed="@(tick ? "true" : "false")" @onclick="() => ToggleCheck(f.Id)">
+                                @if (tick) { <Icon Name="check" /> }
+                            </button>
+                        </div>
                     }
                 </div>
                 <div class="fish-detail">
-                    @if (Session.Basket.FirstOrDefault(f => f.Id == Session.SelectedFishId) is { } sel)
+                    @if (Focus is { } sel)
                     {
-                        <svg viewBox="-60 -40 120 80" class="big"><Fish Look="sel.Look" Length="100" /></svg>
-                        <div class="name">@sel.Name</div>
-                        <div class="len">@sel.LengthCm.ToString("0.0") cm</div>
-                        <div class="chip">售价待定</div>
+                        <svg viewBox="-60 -40 120 80" class="big"><Fish Species="@sel.SpeciesId" Length="100" /></svg>
+                        <div class="name">@Texts.FishName(sel.SpeciesId)</div>
+                        <div class="len" data-len="@sel.LengthMm">@Texts.Cm(sel.LengthMm)</div>
+                        <div class="chip" data-price="@Price(sel)">售价 @Price(sel)</div>
+                        <div class="meta">@MapName(sel.MapId) · @Texts.Time(sel.CaughtAtMs)</div>
+                    }
+                    else if (Basket.Count > 0)
+                    {
+                        <div class="hint">点一条鱼看详情</div>
                     }
                 </div>
             </div>
             <div class="panel-actions">
-                <button class="btn purple" disabled title="出售规则待定">出售</button>
-                <button class="btn lime" disabled title="收藏规则待定">放入收藏</button>
+                <button class="btn purple sell" disabled="@(!CanSell)" @onclick="Session.BeginSale">
+                    出售@(Session.Checked.Count > 0 ? $" {Session.Checked.Count} 条" : "")
+                </button>
+                <button class="btn lime collect" disabled="@(!Session.CanPlay || Focus == null)" @onclick="CollectFocus">放入收藏</button>
+                <button class="btn small" @onclick="() => _ledger = true">账本</button>
             </div>
-            <div class="sample-note">示例数据</div>
+            @if (Session.PendingSale is { } q)
+            {
+                <div class="confirm solid">
+                    <b>确认出售 @q.Lines.Count 条？</b>
+                    <div class="lines">
+                        @foreach (var l in q.Lines)
+                        {
+                            <div class="line-row" data-fish="@l.FishId" data-price="@l.Price">
+                                <span>@Texts.FishName(l.SpeciesId)</span><span>@Texts.Cm(l.LengthMm)</span><span>@l.Price</span>
+                            </div>
+                        }
+                    </div>
+                    <div class="total" data-total="@q.Total">合计 +@q.Total</div>
+                    <div class="row">
+                        <button class="btn cancel" @onclick="Session.CancelSale">取消</button>
+                        <button class="btn purple ok" disabled="@(!Session.CanPlay)" @onclick="Session.ConfirmSaleAsync">确认出售</button>
+                    </div>
+                </div>
+            }
         </div>
         break;
 
@@ -60,59 +124,83 @@
             <PanelHead Title="收藏室" OnClose="Close" />
             <div class="panel-body split">
                 <div class="tank-wrap">
-                    <div class="label">背景预览</div>
-                    @* 同一鱼缸共用尺度：两条示例鱼按体长等比（CONTENT-04） *@
+                    <div class="label">鱼缸一 <span class="cap" data-stat="tank">@Tank.Count/@PlayEngine.FirstTankCapacity</span></div>
+                    @* 同一鱼缸共用尺度：每毫米画 TankScale 单位，鱼按真实体长等比（CONTENT-04） *@
                     <svg class="tank" viewBox="0 0 600 300">
                         <rect x="6" y="6" width="588" height="288" rx="18" fill="#8cc9b2" class="line" />
                         <path d="M6 40 H594" stroke="#b9e3d3" stroke-width="16" />
                         <path d="M60 290 C40 230 80 200 60 140 M90 290 C110 240 80 210 100 170 M520 290 C500 220 540 200 520 150" stroke="#a9c96a" stroke-width="12" fill="none" stroke-linecap="round" />
                         <path d="M20 294 C40 260 100 260 120 294 Z M440 294 C460 262 520 262 560 294 Z" fill="#a8a8ad" class="line" />
-                        <Fish Look="FishLook.BigTail" X="230" Y="160" Length="@(TankScale * SampleData.BigTailFish.LengthCm)" />
-                        <Fish Look="FishLook.Silver" X="430" Y="120" Length="@(TankScale * SampleData.SilverFish.LengthCm)" />
+                        @{ var tank = Tank; var scale = TankScale; }
+                        @for (int i = 0; i < tank.Count; i++)
+                        {
+                            var f = tank[i];
+                            var (x, y) = TankSpot(i);
+                            <g class="tank-fish @(f.Id == Session.TankFishId ? "on" : "")" data-fish="@f.Id" data-len="@f.LengthMm" @onclick="() => Session.TankFishId = f.Id">
+                                <Fish Species="@f.SpeciesId" X="x" Y="y" Length="@(f.LengthMm * scale)" />
+                            </g>
+                        }
                     </svg>
                 </div>
-                <div class="tank-list">
-                    <button class="tank-item on"><span class="mini"></span><span>鱼缸一</span></button>
-                    <button class="tank-item"><span class="mini"></span><span>鱼缸二</span></button>
-                    <button class="more-tanks" disabled title="鱼缸规则待定">更多鱼缸 <Icon Name="chevron" /></button>
+                <div class="tank-side">
+                    @if (TankFocus is { } tf)
+                    {
+                        <div class="name">@Texts.FishName(tf.SpeciesId)</div>
+                        <div class="len" data-len="@tf.LengthMm">@Texts.Cm(tf.LengthMm)</div>
+                        <button class="btn retrieve" disabled="@(!Session.CanPlay)" @onclick="() => Session.RetrieveAsync(tf.Id)">取回鱼篓</button>
+                    }
+                    else
+                    {
+                        <div class="hint">@(Tank.Count == 0 ? "鱼缸是空的，从鱼篓放鱼进来" : "点缸里的鱼可以取回")</div>
+                    }
                 </div>
             </div>
             <div class="panel-actions">
-                <button class="btn lime" disabled title="规则待定">设为背景</button>
-                <button class="btn purple" disabled title="规则待定">管理鱼只</button>
+                @if (IsBackground)
+                {
+                    <button class="btn purple background" data-on="true" disabled="@(!Session.CanPlay)" @onclick="() => Session.SetBackgroundAsync(null)">取消背景</button>
+                }
+                else
+                {
+                    <button class="btn lime background" data-on="false" disabled="@(!Session.CanPlay)" @onclick="() => Session.SetBackgroundAsync(PlayEngine.FirstTankId)">设为背景</button>
+                }
             </div>
-            <div class="sample-note">示例数据</div>
         </div>
         break;
 
     case Panel.Records:
         <div class="panel solid records">
             <PanelHead Title="记录" OnClose="Close" />
+            <div class="found" data-stat="records">@FoundCount/@Session.FishCatalog.All.Count</div>
             <div class="panel-body split">
                 <div class="record-list">
-                    @for (int i = 0; i < SampleData.Records.Length; i++)
+                    @foreach (var sp in Session.FishCatalog.All)
                     {
-                        var idx = i;
-                        var r = SampleData.Records[i];
-                        <button class="record-row @(_record == idx ? "on" : "") @(r.Fish == null ? "unknown" : "")" @onclick="() => _record = idx">
-                            <span>@r.Label</span>
+                        var r = Record(sp.Id);
+                        <button class="record-row @(_record == sp.Id ? "on" : "") @(r == null ? "unknown" : "")" data-species="@sp.Id" data-caught="@(r != null ? "true" : "false")" @onclick="() => _record = sp.Id">
+                            <span>@(r != null ? Texts.FishName(sp.Id) : "？？？")</span>
                         </button>
                     }
                 </div>
                 <div class="fish-detail">
-                    @if (SampleData.Records[_record].Fish is { } rf)
+                    @if (Session.FishCatalog.Find(_record) is { } rs)
                     {
-                        <svg viewBox="-60 -40 120 80" class="big"><Fish Look="rf.Look" Length="100" /></svg>
-                        <div class="name">@rf.Name</div>
-                        <div class="len">@rf.LengthCm.ToString("0.0") cm</div>
-                    }
-                    else
-                    {
-                        <div class="unknown-big">？</div>
+                        var r = Record(rs.Id);
+                        <svg viewBox="-60 -40 120 80" class="big"><Fish Species="@rs.Id" Length="100" Silhouette="r == null" /></svg>
+                        @if (r != null)
+                        {
+                            <div class="name">@Texts.FishName(rs.Id)</div>
+                            <div class="len" data-len="@r.MaxLengthMm">最长 @Texts.Cm(r.MaxLengthMm)</div>
+                            <div class="meta" data-count="@r.Count">抓到 @r.Count 次 · 首次 @Texts.Time(r.FirstAtMs)</div>
+                        }
+                        else
+                        {
+                            <div class="name">？？？</div>
+                            <div class="meta">出处：@string.Join("、", rs.MapIds.Select(MapName))</div>
+                        }
                     }
                 </div>
             </div>
-            <div class="sample-note">示例数据</div>
         </div>
         break;
 
@@ -138,25 +226,83 @@
         <div class="panel solid skin">
             <PanelHead Title="皮肤" OnClose="Close" />
             <div class="tabs">
-                @foreach (var t in SkinTabs)
+                @foreach (var c in Enum.GetValues<SkinCategory>())
                 {
-                    <button class="pill tabpill @(_skinTab == t ? "lime" : "")" @onclick="() => _skinTab = t">@t</button>
+                    <button class="pill tabpill @(Session.SkinTab == c ? "lime" : "")" data-tab="@c" @onclick="() => Session.SkinTab = c">@Texts.Category(c)</button>
                 }
             </div>
             <div class="panel-body split">
                 <div class="preview">
-                    <div class="label">外观预览</div>
-                    <svg viewBox="0 0 400 220" class="skin-preview">
-                        <path d="M40 200 Q 200 20 380 30" class="line" stroke-width="30" fill="none" />
-                        <path d="M40 200 Q 200 20 380 30" stroke="#d9b6ef" stroke-width="16" stroke-linecap="round" fill="none" />
-                        <circle cx="110" cy="150" r="30" fill="#fbf3e3" class="line" stroke-width="7" />
-                        <circle cx="110" cy="150" r="11" fill="#b98ed6" />
-                    </svg>
+                    <div class="skin-grid">
+                        @foreach (var s in Session.Skins.All.Where(s => s.Category == Session.SkinTab))
+                        {
+                            var owned = Session.Play?.Owns(s.Id) ?? s.IsBase;
+                            var equipped = Session.Play?.EquippedId(s.Category) == s.Id;
+                            <button class="skin-cell @(SkinFocus?.Id == s.Id ? "on" : "") @(owned ? "owned" : "locked")" data-skin="@s.Id" data-owned="@(owned ? "true" : "false")" data-equipped="@(equipped ? "true" : "false")" @onclick="() => Session.SkinSelected = s.Id">
+                                <span class="nm">@(owned ? Texts.SkinName(s.Id) : "？")</span>
+                                @if (equipped) { <span class="tag">装备中</span> }
+                            </button>
+                        }
+                    </div>
+                    @if (SkinFocus is { } sf)
+                    {
+                        var owned = Session.Play?.Owns(sf.Id) ?? sf.IsBase;
+                        <div class="preview-row">
+                            <svg viewBox="@(sf.Category == SkinCategory.Scene ? "0 300 1600 520" : "-180 -380 640 480")" class="skin-preview" data-preview="@sf.Id">
+                                @if (sf.Category == SkinCategory.Scene)
+                                {
+                                    <path d="M0 540 C200 528 420 548 640 538 S1100 530 1300 540 S1520 534 1600 540 V600 H0 Z" fill="#a9c96a" class="line" stroke-width="7" />
+                                    <rect x="-10" y="592" width="1620" height="190" fill="#7dbba5" class="line" stroke-width="7" />
+                                    <SceneDecor Skin="@sf.Id" />
+                                }
+                                else
+                                {
+                                    <Bear Preview Mode="FishingMode.Lure" Spot="new(0, 0)"
+                                          Character="@(sf.Category == SkinCategory.Character ? sf.Id : Equipped(SkinCategory.Character))"
+                                          Rod="@(sf.Category == SkinCategory.Rod ? sf.Id : Equipped(SkinCategory.Rod))"
+                                          Glove="@(sf.Category == SkinCategory.Glove ? sf.Id : Equipped(SkinCategory.Glove))" />
+                                }
+                            </svg>
+                            <div class="preview-side">
+                                <div class="nm">@(owned ? Texts.SkinName(sf.Id) : "未拥有")</div>
+                                @if (Session.Play?.EquippedId(sf.Category) == sf.Id)
+                                {
+                                    <button class="btn equip" disabled>装备中</button>
+                                }
+                                else
+                                {
+                                    <button class="btn lime equip" disabled="@(!Session.CanPlay || !owned)" title="@(owned ? "装备" : "还没拥有")" @onclick="() => Session.EquipAsync(sf.Id)">装备</button>
+                                }
+                            </div>
+                        </div>
+                    }
                 </div>
                 <div class="draw">
-                    <div class="cost">消耗待定</div>
-                    <button class="btn lime big" disabled title="抽取规则待定">抽取</button>
-                    <button class="btn" disabled title="抽取内容待定">查看内容</button>
+                    <div class="wallet" data-stat="skin-coins" title="金币 @Coins"><span class="coin"></span>@Coins</div>
+                    @* 公示：单价、12 款各 1/12、连续重复与保底（WU-06、04 §3） *@
+                    <div class="odds" data-stat="odds">
+                        <div>每抽 <b>@SkinCatalog.DrawCost</b>，重复返 @SkinCatalog.DuplicateRefund</div>
+                        <div>@Session.Skins.Pool.Count 款各 1/@Session.Skins.Pool.Count</div>
+                        <div data-stat="streak">连续重复 @(Session.Play?.Profile.DuplicateStreak ?? 0)/@SkinCatalog.StreakForGuarantee</div>
+                        @if (Session.Play?.NextDrawGuaranteed == true)
+                        {
+                            <div class="guarantee" data-stat="guaranteed">下一抽必出新款</div>
+                        }
+                    </div>
+                    @if (Session.Play?.AllOwned == true)
+                    {
+                        <button class="btn big draw-btn" disabled data-all-owned="true">已集齐</button>
+                    }
+                    else
+                    {
+                        <button class="btn lime big draw-btn" disabled="@(!Session.CanPlay || Coins < SkinCatalog.DrawCost)" title="@(Coins < SkinCatalog.DrawCost ? $"金币不够，还差 {SkinCatalog.DrawCost - Coins}" : "抽取")" @onclick="Session.DrawAsync">抽取</button>
+                    }
+                    @if (Session.LastDraw is { } d)
+                    {
+                        <div class="last-draw" data-skin="@d.SkinId" data-duplicate="@(d.Duplicate ? "true" : "false")">
+                            抽到 @Texts.SkinName(d.SkinId!)@(d.Duplicate ? $"（重复，返 {SkinCatalog.DuplicateRefund}）" : "（新）")
+                        </div>
+                    }
                 </div>
             </div>
         </div>
@@ -194,18 +340,24 @@
         break;
 }
 
-@if (Session.CatchToast is { } fish && Pet.State.Panel == Panel.None)
+@if (Session.Card is { } card && Pet.State.Panel == Panel.None)
 {
-    @* 新鱼获轻提示：鱼已经在鱼篓里了；关掉提示不影响鱼篓（UI-07） *@
-    <div class="toast solid">
-        <div class="toast-head"><b>新鱼获</b><button class="x" title="关闭" @onclick="CloseToast"><Icon Name="close" /></button></div>
-        <div class="toast-body">
-            <svg viewBox="-60 -40 120 80"><Fish Look="fish.Look" Length="100" /></svg>
-            <span class="sep"></span>
-            <span class="len">@fish.LengthCm.ToString("0.0") cm</span>
-            <button class="toast-basket" title="打开鱼篓" @onclick="OpenBasketFromToast"><Icon Name="basket" /></button>
-        </div>
-    </div>
+    @* 新鱼获卡片：鱼已经存进鱼篓才出现，冒在小熊头顶；不抢焦点、不开面板；点它打开鱼篓（UI-07、B1 Q10 假设 A） *@
+    <button class="catch-card solid" style="@CardStyle" data-fish="@card.Latest.Id" data-count="@card.Fish.Count" title="打开鱼篓" @onclick="Session.OpenCard">
+        <span class="card-head">新鱼获@(card.Fish.Count > 1 ? $" +{card.Fish.Count}" : "")@if (card.Latest.Guaranteed) { <span class="tag" data-guaranteed="true">保底</span> }</span>
+        <span class="card-body">
+            <svg viewBox="-60 -40 120 80"><Fish Species="@card.Latest.SpeciesId" Length="100" /></svg>
+            <span class="txt">
+                <span class="name">@Texts.FishName(card.Latest.SpeciesId)</span>
+                <span class="len">@Texts.Cm(card.Latest.LengthMm)</span>
+            </span>
+        </span>
+    </button>
+}
+
+@if (Session.Notice is { } notice)
+{
+    <div class="notice solid @(Session.NoticeIsError ? "error" : "")" role="status" data-error="@(Session.NoticeIsError ? "true" : "false")">@notice</div>
 }
 
 @code {
@@ -213,15 +365,86 @@
     [Parameter] public EventCallback OnChanged { get; set; }
 
     private PetController Pet => Session.Pet;
-    private int _record;
-    private static readonly string[] SkinTabs = { "人物", "鱼竿", "手套", "场景" };
-    private string _skinTab = "鱼竿";
+    private bool _ledger;
+    private string _record = "TMP_F001";
 
-    /// <summary>收藏室鱼缸里 1 cm 画多少单位：按最大示例鱼占缸宽约 45% 定。</summary>
-    private static double TankScale => 270 / SampleData.BigTailFish.LengthCm;
+    /// <summary>
+    /// 收藏室鱼缸里每毫米画多少单位：缸里所有鱼共用一个比例（CONTENT-04），
+    /// 按缸里最长的那条定成约占缸宽一半，只有小鱼时也看得清；单条小鱼不放大过头。
+    /// </summary>
+    private double TankScale => Math.Min(1.4, 300.0 / Math.Max(1, Tank.Select(f => f.LengthMm).DefaultIfEmpty(1).Max()));
+
+    private const double CardWidth = 560, CardHeight = 226;
+
+    /// <summary>卡片冒在小熊头顶（头顶约在脚下 330 单位）；贴着顶栏下沿和画面两边夹住，底边不会压到岸（y 528）。</summary>
+    private string CardStyle
+    {
+        get
+        {
+            var s = Pet.State.Spot ?? new ScenePoint(800, 565);
+            double left = Math.Clamp(s.X - CardWidth / 2, 14, SceneCanvas.Width - 14 - CardWidth);
+            double top = Math.Clamp(s.Y - 330 - CardHeight, 96, 528 - 20 - CardHeight);
+            return FormattableString.Invariant($"left:{left:0.#}px;top:{top:0.#}px;width:{CardWidth}px");
+        }
+    }
+
+    private long Coins => Session.Play?.Profile.Coins ?? 0;
+    private List<FishRecord> Basket => Session.Play?.InBasket.Reverse().ToList() ?? new();
+    private List<FishRecord> Tank => Session.Play?.InTank(PlayEngine.FirstTankId).ToList() ?? new();
+    private FishRecord? Focus => Basket.FirstOrDefault(f => f.Id == Session.FocusFishId);
+    private FishRecord? TankFocus => Tank.FirstOrDefault(f => f.Id == Session.TankFishId);
+    private bool IsBackground => Session.Play?.Profile.BackgroundTankId == PlayEngine.FirstTankId;
+    private bool CanSell => Session.CanPlay && (Session.Checked.Count > 0 || Focus != null);
+    private List<LedgerEntry> Ledger => Session.Play?.Profile.Ledger.AsEnumerable().Reverse().ToList() ?? new();
+
+    private int? Price(FishRecord f) => Session.FishCatalog.Find(f.SpeciesId)?.Price(f.LengthMm);
+
+    private SpeciesRecord? Record(string speciesId) =>
+        Session.Play != null && Session.Play.Profile.Records.TryGetValue(speciesId, out var r) ? r : null;
+
+    private int FoundCount => Session.FishCatalog.All.Count(s => Record(s.Id) != null);
+
+    private SkinDef? SkinFocus
+    {
+        get
+        {
+            var s = Session.Skins.Find(Session.SkinSelected);
+            return s != null && s.Category == Session.SkinTab ? s : Session.Skins.Find(Equipped(Session.SkinTab));
+        }
+    }
+
+    private string Equipped(SkinCategory c) => Session.Play?.EquippedId(c) ?? Session.Skins.BaseOf(c).Id;
+
+    private string MapName(string mapId) => Pet.Maps.All.FirstOrDefault(m => m.Id == mapId)?.PlaceholderName ?? mapId;
+
+    private static string KindName(LedgerKind k) => k switch
+    {
+        LedgerKind.Sale => "卖鱼",
+        LedgerKind.Draw => "抽取",
+        _ => "开发",
+    };
+
+    private static string LedgerWhat(LedgerEntry e) => e.Kind switch
+    {
+        LedgerKind.Sale => $"{e.Lines.Count} 条鱼",
+        LedgerKind.Draw => Texts.SkinName(e.SkinId ?? "") + (e.Duplicate ? "（重复）" : ""),
+        _ => "开发入口",
+    };
+
+    /// <summary>缸里第 i 条鱼的位置：按编号错开，刷新不乱跳。</summary>
+    private static (double X, double Y) TankSpot(int i) => (170 + (i * 151) % 260, 90 + (i * 67) % 170);
+
+    private void ToggleCheck(string id)
+    {
+        if (!Session.Checked.Remove(id)) Session.Checked.Add(id);
+    }
+
+    private Task CollectFocus() => Focus is { } f ? Session.CollectAsync(f.Id) : Task.CompletedTask;
 
     private Task Close()
     {
+        _ledger = false;
+        Session.CancelSale();
         Pet.ClosePanel();
         return OnChanged.InvokeAsync();
     }
@@ -254,16 +477,5 @@
     {
         Pet.SetMute(on);
         return OnChanged.InvokeAsync();
-    }
-
-    private void Select(int id) => Session.SelectedFishId = id;
-
-    private void CloseToast() => Session.CatchToast = null;
-
-    private Task OpenBasketFromToast()
-    {
-        if (Session.CatchToast is { } f) Session.SelectedFishId = f.Id;
-        Session.CatchToast = null;
-        return Open(Panel.Basket);
     }
 }

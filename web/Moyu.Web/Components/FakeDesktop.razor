@@ -9,7 +9,8 @@
         <div class="icons">
             @foreach (var icon in Icons)
             {
-                <button class="desk-icon @(_selectedIcon == icon.Id ? "sel" : "")"
+                @* "桌面摸鱼"图标是游戏的打开入口，属于管理操作，点它不算工作输入（01 §1） *@
+                <button class="desk-icon @(_selectedIcon == icon.Id ? "sel" : "")" data-game-ui="@(icon.Id == "pet" ? "open" : null)"
                         @onclick="() => SelectIcon(icon.Id)" @onclick:stopPropagation="true"
                         @ondblclick="() => OpenIcon(icon.Id)">
                     <span class="glyph @icon.Id"></span>
@@ -50,7 +51,9 @@
         {
             <div class="dev-strip" @onclick:stopPropagation="true">
                 <b>开发</b>
-                <button @onclick="Session.SimulateCatch">模拟鱼获</button>
+                <button @onclick="() => Session.DevInjectFishAsync(1)">注入鱼</button>
+                <button @onclick="() => Session.DevAddCoinsAsync(100)">+100 币</button>
+                <button @onclick="ToggleSaveFailure">@(_failSaves ? "恢复保存" : "模拟保存失败")</button>
                 <button @onclick="ResetPrefs">重置小窗</button>
             </div>
         }
@@ -62,7 +65,7 @@
             <button class="task @(_notepadOpen ? "open" : "")" title="记事本" @onclick="() => _notepadOpen = true">
                 <span class="glyph notepad"></span>
             </button>
-            <button class="task @(Pet.State.Closed ? "" : "open")" title="桌面摸鱼" @onclick="TaskbarPet">
+            <button class="task @(Pet.State.Closed ? "" : "open")" title="桌面摸鱼" data-game-ui="taskbar" @onclick="TaskbarPet">
                 <img src="img/icon.svg" alt="" />
             </button>
             <div class="clock">@DateTime.Now.ToString("HH:mm")<br />@DateTime.Now.ToString("yyyy/M/d")</div>
@@ -76,6 +79,7 @@
     private Timer? _clock;
     private bool _loaded;
     private bool _dev;
+    private bool _failSaves;
     private string? _selectedIcon;
     private bool _notepadOpen = true;
     private int _notepadX = 300;
@@ -111,13 +115,44 @@
         if (!firstRender) return;
         _ref = DotNetObjectReference.Create(this);
         await JS.InvokeVoidAsync("moyuPet.init", _ref, _desktop);
+        await JS.InvokeVoidAsync("moyuPlay.init", _ref);
         _dev = await JS.InvokeAsync<bool>("moyuPet.isDev");
-        if (_dev) StateHasChanged();
+        if (!_dev) return;
+        await JS.InvokeVoidAsync("moyuPlay.enableDev", _ref);
+        StateHasChanged();
     }
 
     private void OnChanged() => InvokeAsync(StateHasChanged);
 
-    private Task Commit() => Session.CommitAsync();
+    private Task Commit() => Session.CommitPrefsAsync();
+
+    // ---- 工作输入与写权（js/play.js） ----
+
+    [JSInvokable]
+    public bool OnWorkInput() => Session.OnWorkInput();
+
+    [JSInvokable]
+    public Task OnWriterGranted() => Session.OnWriterGrantedAsync();
+
+    // ---- 开发入口（?dev=1，window.moyuDev） ----
+
+    [JSInvokable]
+    public Task DevInjectFish(int n) => Session.DevInjectFishAsync(n);
+
+    [JSInvokable]
+    public Task DevAddCoins(int n) => Session.DevAddCoinsAsync(n);
+
+    [JSInvokable]
+    public Task DevSaveFailureChanged(bool failing)
+    {
+        _failSaves = failing;
+        return Session.DevSaveFailureChangedAsync(failing);
+    }
+
+    [JSInvokable]
+    public string DevProfileJson() => Session.DevProfileJson();
+
+    private async Task ToggleSaveFailure() => await JS.InvokeAsync<object>("moyuDev.failSaves", !_failSaves);
 
     [JSInvokable]
     public Task OnWindowMoved(double x, double y)
@@ -191,7 +226,7 @@
     private async Task ResetPrefs()
     {
         await JS.InvokeVoidAsync("moyuPet.save", "moyu.prefs.v1", "");
-        await Session.LoadAsync();
+        await Session.ReloadPrefsAsync();
     }
 
     private static string Px(double v) => v.ToString("0.###", System.Globalization.CultureInfo.InvariantCulture) + "px";

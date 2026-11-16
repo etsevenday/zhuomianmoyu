@@ -8,8 +8,10 @@ Windows 桌面上的透明小窗伙伴：一边工作一边让小熊在角落钓
 - 按住小熊或水面拖动小窗；单击岸边（路亚、手竿）或浅水（摸鱼）给小熊换位置，放不下就留在原处。
 - 透明区穿透默认开：点小窗留白处，点击落到下面的桌面或记事本；设置里可以关。
 - 右上"—"收起成头像，单击头像恢复；"×"关闭后双击桌面图标或点任务栏图标再打开。
-- 地址加 `?dev=1` 时右上角有开发入口（模拟鱼获、重置小窗）。
-- 第一阶段只有窗口与界面骨架：没有捕鱼计数和结算，面板里的鱼是示例数据；界面文字和美术都是占位。
+- 网页核心循环（B1）：在页面里游戏以外的地方按键、点鼠标都算工作输入，底栏常驻总累计、本轮进度、金币和保存状态；路亚每 500 次、摸鱼每 200 次判定一次，周期末必出鱼；鱼进鱼篓，可放进收藏（一个鱼缸 20 条，可设为场景背景）、按体长卖金币，金币抽皮肤、装备。手竿只计次数，计时未开放。
+- 玩法档存在本浏览器的 IndexedDB，窗口偏好存在 localStorage；同站只有一个标签页能写，其他标签页只读。
+- 地址加 `?dev=1` 时右上角有开发入口（注入鱼、+100 币、模拟保存失败、重置小窗），开发来源的鱼和金币在档里有标记。
+- 鱼和外观是临时内容，名字、界面文字和美术都是占位。
 
 ## 工程结构
 
@@ -18,15 +20,16 @@ src/Core/                纯 C# 内核，不依赖 UnityEngine；同时是一个
   Desktop/               桌面与小窗几何（16:9、1/4 宽高、工作区夹取、收起头像）
   Scene/                 画布坐标、三模式、三张地图的岸边/浅水区域、选位与自动安排
   State/ Engine/         小窗状态、面板、设置保存与恢复
+  Play/                  玩法：捕获节点、可重建随机数、临时鱼表与鱼价、档案、收藏、出售、皮肤抽取与装备
 web/Moyu.Core/           .NET 类库，编译 src/Core 的源码
 web/Moyu.Core.Tests/     NUnit：第一阶段可在内核判定的验收（UI、SPACE、CONTENT 等编号）
-web/Moyu.Web/            Blazor WebAssembly 网页壳：模拟桌面、小窗、面板；手势在 wwwroot/js/pet.js
+web/Moyu.Web/            Blazor WebAssembly 网页壳：模拟桌面、小窗、面板；手势在 wwwroot/js/pet.js，工作输入、存档、写权在 wwwroot/js/play.js
 tools/verify/            浏览器验收脚本（零依赖 Node + CDP），每批一个，对应 doc/测试用例/ 的用例表
 ```
 
 将来接 Unity：在 Unity 工程的 `Packages/manifest.json` 里加 `"com.moyu.core": "file:../../src/Core"`。
 
-本地运行需要 .NET 8 SDK：`dotnet test web/Moyu.sln`；`dotnet run --project web/Moyu.Web --launch-profile http`（http://localhost:5188）。浏览器验收需要 Node 22+ 和 Chrome/Edge：推送前跑 `node tools/verify/b0.mjs --release`（照 CI 发布本地 Release 包再测）；也可给开发服务器网址，不给网址就测线上。改了内核还要跑变异测试：`dotnet tool restore` 后在 `web/Moyu.Core.Tests` 里 `dotnet stryker --since:origin/main`（见测试用例准则 §5）。
+本地运行需要 .NET 8 SDK：`dotnet test web/Moyu.sln`；`dotnet run --project web/Moyu.Web --launch-profile http`（http://localhost:5188）。浏览器验收需要 Node 22+ 和 Chrome/Edge：推送前跑 `node tools/verify/b1.mjs --release` 和 `node tools/verify/b0.mjs --release`（照 CI 发布本地 Release 包再测）；也可给开发服务器网址，不给网址就测线上。改了内核还要跑变异测试：`dotnet tool restore` 后在 `web/Moyu.Core.Tests` 里 `dotnet stryker --since:origin/main`（见测试用例准则 §5）。
 
 ## 分工
 

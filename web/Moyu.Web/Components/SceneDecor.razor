@@ -1,0 +1,35 @@
+@* 场景外观（04 §4，B1 Q12 假设 A 的占位画法）：叠在场景上的装饰，都不接指针、不改岸和水的命中区。
+   画布同场景 1600×900；皮肤页预览也用它。 *@
+@if (Skin == "WEB_SCENE_03")
+{
+    @* 月光：水面压暗一点，一列月影 *@
+    <g class="nohit scene-skin">
+        <rect x="-10" y="592" width="1620" height="190" fill="#33508a" opacity=".28" />
+        <path d="M760 620 h80 M740 650 h120 M770 680 h60 M750 710 h100 M780 740 h40" stroke="#fbf3e3" stroke-width="9" stroke-linecap="round" opacity=".85" />
+    </g>
+}
+
+@if (Skin == "WEB_SCENE_01")
+{
+    @* 暖灯：岸上一盏灯 *@
+    <g class="nohit scene-skin">
+        <circle cx="1240" cy="380" r="90" fill="#ffd27a" opacity=".35" />
+        <path d="M1240 545 V400" class="line" stroke-width="12" />
+        <path d="M1210 350 h60 l-8 60 h-44 Z" fill="#ffd27a" class="line" />
+        <path d="M1206 350 h68 l-34 -26 Z" fill="#e2b48f" class="line" stroke-linejoin="round" />
+    </g>
+}
+else if (Skin == "WEB_SCENE_02")
+{
+    @* 细雨：斜雨丝和水面涟漪 *@
+    <g class="nohit scene-skin">
+        <path d="M90 470 l-14 40 M300 500 l-14 40 M520 460 l-14 40 M760 490 l-14 40 M980 470 l-14 40 M1210 500 l-14 40 M1420 465 l-14 40 M200 640 l-14 40 M650 700 l-14 40 M1100 650 l-14 40 M1500 700 l-14 40" stroke="#5aa9c9" stroke-width="6" stroke-linecap="round" />
+        <ellipse cx="420" cy="690" rx="40" ry="9" fill="none" stroke="#fbf3e3" stroke-width="5" />
+        <ellipse cx="880" cy="740" rx="52" ry="11" fill="none" stroke="#fbf3e3" stroke-width="5" />
+        <ellipse cx="1300" cy="700" rx="36" ry="8" fill="none" stroke="#fbf3e3" stroke-width="5" />
+    </g>
+}
+
+@code {
+    [Parameter] public string Skin { get; set; } = "BASE_SCENE";
+}

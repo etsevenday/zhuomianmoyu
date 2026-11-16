@@ -338,45 +338,7 @@ async function run() {
     check('B0-29 打开收藏替换鱼篓，再点收藏关闭', one.length === 1 && one[0].includes('collection') && none.length === 0, { one, none });
   }
 
-  // B0-36 / B0-37 规则未定的按钮与示例鱼
-  {
-    const disabled = {};
-    await clickBtn('鱼篓');
-    const n0 = await ev(`document.querySelectorAll('.fish-cell').length`);
-    await ev(`[...document.querySelectorAll('.panel-actions .btn')].forEach(b => b.click()); true`);
-    await sleep(300);
-    disabled.basket = await ev(`[...document.querySelectorAll('.panel-actions .btn')].map(b => b.innerText + ':' + b.disabled)`);
-    const n1 = await ev(`document.querySelectorAll('.fish-cell').length`);
-    await clickBtn('收藏');
-    disabled.collection = await ev(`[...document.querySelectorAll('.panel-actions .btn, .more-tanks')].map(b => b.innerText.trim() + ':' + b.disabled)`);
-    const scales = await ev(`[...document.querySelectorAll('svg.tank > g')].map(g => +/scale\\(([\\d.]+)\\)/.exec(g.getAttribute('transform'))[1])`);
-    await clickBtn('更多'); await clickBtn('皮肤');
-    disabled.skin = await ev(`[...document.querySelectorAll('.draw .btn')].map(b => b.innerText.trim() + ':' + b.disabled)`);
-    await clickBtn('房间');
-    disabled.room = await ev(`[...document.querySelectorAll('.panel-actions .btn')].map(b => b.innerText.trim() + ':' + b.disabled)`);
-    await clickBtn('房间');
-    const all = Object.values(disabled).flat();
-    check('B0-36 出售、收藏、设为背景、抽取、邀请等规则未定的按钮全部禁用，硬点也不改鱼篓', all.length >= 8 && all.every(s => s.endsWith(':true')) && n0 === n1, { disabled, fish: [n0, n1] });
-    check('B0-37 鱼缸里两条示例鱼按同一比例画（42.0 : 23.6）', scales.length === 2 && near(scales[0] / scales[1], 42.0 / 23.6, 0.001), scales);
-  }
-
-  // B0-35 鱼获提示
-  {
-    await clickBtn('鱼篓');
-    const n0 = await ev(`document.querySelectorAll('.fish-cell').length`);
-    await clickBtn('鱼篓');
-    await ev(`document.querySelector('#notepad textarea').focus(); true`);
-    await ev(`[...document.querySelectorAll('.dev-strip button')].find(b => b.innerText === '模拟鱼获').click(); true`);
-    await sleep(500);
-    const st = await ev(`({ toast: !!document.querySelector('.toast'), focus: document.activeElement?.tagName, panels: window.__t.panels() })`);
-    await shot('04-catch-toast');
-    await clickAt(await T(`center(document.querySelector('.toast .x'))`));
-    await clickBtn('鱼篓');
-    const n1 = await ev(`document.querySelectorAll('.fish-cell').length`);
-    await clickBtn('鱼篓');
-    check('B0-35 鱼获提示不抢记事本焦点、不自动开面板；关掉提示后鱼篓多一条',
-      st.toast && st.focus === 'TEXTAREA' && st.panels.filter(p => !p.includes('toast')).length === 0 && n1 === n0 + 1 && !(await ev(`!!document.querySelector('.toast')`)), { ...st, fish: [n0, n1] });
-  }
+  // B0-35 / B0-36 / B0-37 已作废：B1 去掉了模拟鱼获和示例鱼、开放了出售收藏抽取，改由 B1 用例覆盖
 
   // B0-32 / B0-33 / B0-34 收起、关闭
   {

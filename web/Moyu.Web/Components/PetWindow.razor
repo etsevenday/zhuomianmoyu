@@ -23,10 +23,17 @@
             <button class="pill lime mode" @onclick="() => Toggle(Panel.ModeMenu)">
                 <Icon Name="@ModeIcon(Pet.State.Mode)" /><span>@ModeName(Pet.State.Mode)</span><Icon Name="caret" Class="caret" />
             </button>
-            <button class="pill tab @On(Panel.Basket)" @onclick="() => Toggle(Panel.Basket)"><Icon Name="basket" /><span>鱼篓</span></button>
-            <button class="pill tab @On(Panel.Collection)" @onclick="() => Toggle(Panel.Collection)"><Icon Name="star" /><span>收藏</span></button>
-            <button class="pill tab @On(Panel.Records)" @onclick="() => Toggle(Panel.Records)"><Icon Name="list" /><span>记录</span></button>
-            <button class="pill tab @(MoreOn ? "on" : "")" @onclick="() => Toggle(Panel.More)"><Icon Name="gear" /><span>更多</span></button>
+            @* 常驻数字：总累计、本轮进度、金币、保存状态（02 §1、WU-01）。悬停看完整整数。 *@
+            <div class="stats" aria-live="polite">
+                <span class="stat" data-stat="total" title="总累计 @(Play?.Profile.LifetimeInputs ?? 0)"><i>总</i>@Short(Play?.Profile.LifetimeInputs ?? 0)</span>
+                <span class="stat cycle" data-stat="cycle" title="@CycleTitle"><i>本轮</i>@CycleText</span>
+                <span class="stat" data-stat="coins" title="金币 @(Play?.Profile.Coins ?? 0)"><span class="coin"></span>@Short(Play?.Profile.Coins ?? 0)</span>
+                <span class="stat save @Session.State.ToString().ToLowerInvariant()" data-stat="save" title="@(Session.LoadError ?? SaveText)">@SaveText</span>
+            </div>
+            <button class="pill tab @On(Panel.Basket)" title="鱼篓" @onclick="() => Toggle(Panel.Basket)"><Icon Name="basket" /></button>
+            <button class="pill tab @On(Panel.Collection)" title="收藏" @onclick="() => Toggle(Panel.Collection)"><Icon Name="star" /></button>
+            <button class="pill tab @On(Panel.Records)" title="记录" @onclick="() => Toggle(Panel.Records)"><Icon Name="list" /></button>
+            <button class="pill tab @(MoreOn ? "on" : "")" title="更多" @onclick="() => Toggle(Panel.More)"><Icon Name="gear" /></button>
         </div>
     </div>
 </div>
@@ -36,6 +43,38 @@
     [Parameter] public EventCallback OnCommit { get; set; }
 
     private PetController Pet => Session.Pet;
+    private PlayEngine? Play => Session.Play;
+
+    // 底栏文字【文案占位，B1 Q13】
+    private string CycleText
+    {
+        get
+        {
+            if (Play == null) return "—";
+            var mode = Pet.State.Mode;
+            var next = Play.NextNode(mode, Pet.State.MapId);
+            if (next == null) return "计时未开放"; // 手竿计时另行收敛（B1 Q8 假设 A）
+            var count = Play.CycleCount(mode, Pet.State.MapId);
+            return $"{count}/{next}" + (next == CaptureRules.For(mode)!.GuaranteedNode ? " 保底" : "");
+        }
+    }
+
+    private string CycleTitle => Play?.NextNode(Pet.State.Mode, Pet.State.MapId) is { } next
+        ? $"本轮 {Play.CycleCount(Pet.State.Mode, Pet.State.MapId)} 次，下一次判定在第 {next} 次"
+        : "手竿只记次数，计时未开放";
+
+    private string SaveText => Session.State switch
+    {
+        SaveState.Loading => "读档中",
+        SaveState.Saved => "已保存",
+        SaveState.Saving => "保存中",
+        SaveState.Unsaved => "未保存",
+        SaveState.ReadOnly => "只读",
+        _ => "读档失败",
+    };
+
+    /// <summary>底栏放不下长数字：一万以上缩成"万"，完整数在悬停提示里。</summary>
+    private static string Short(long n) => n < 10000 ? n.ToString() : (n / 1000 / 10.0).ToString("0.#") + "万";
 
     // 模式名与按钮文字【交文案策划定】，B0 Q5 定稿前用效果图上的字
     public static string ModeName(FishingMode m) => m switch

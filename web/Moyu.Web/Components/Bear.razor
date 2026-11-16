@@ -1,12 +1,17 @@
 @* 占位角色（开发方按 G 粗笔风格画的 SVG，等正式分层素材替换，B0 Q3）。
-   原点在脚下；三种模式三种姿态（ART-04）。整组是"角色"命中区：按住拖窗，单击不换位。 *@
-<g class="bear" data-hit="character" data-drag-target="pet" data-mode="@Mode"
+   原点在脚下；三种模式三种姿态（ART-04）。整组是"角色"命中区：按住拖窗，单击不换位。
+   外观（04 §4）：人物、鱼竿、手套按装备换样子，都是占位画法（B1 Q12 假设 A），不改身体占位和命中区。
+   每次有效输入 js/play.js 给它加 act，pose 做一个短动作（02 §2）。 *@
+<g class="bear" data-hit="@(Preview ? null : "character")" data-drag-target="@(Preview ? null : "pet")" data-mode="@Mode"
+   data-skins="@($"{Character} {Rod} {Glove}")"
    transform="translate(@F(Spot.X) @F(Spot.Y))@(FaceLeft ? " scale(-1 1)" : "")">
+    <g class="pose">
     @if (Mode == FishingMode.Wade)
     {
         @* 摸鱼：站在浅水里，弯腰探水 *@
         <ellipse cx="0" cy="-120" rx="90" ry="105" class="fur" />
         <ellipse cx="22" cy="-105" rx="50" ry="62" class="belly" />
+        <Outfit Skin="@Character" Head="new(8, -252)" Body="new(0, -120)" />
         <circle cx="-48" cy="-312" r="27" class="fur" />
         <circle cx="50" cy="-318" r="25" class="fur" />
         <ellipse cx="8" cy="-252" rx="86" ry="76" class="fur" />
@@ -14,13 +19,15 @@
         <ellipse cx="74" cy="-242" rx="13" ry="10" fill="#1f1d1a" />
         <circle cx="30" cy="-266" r="9" fill="#1f1d1a" />
         <path d="M56 -212 q10 7 20 0" class="line" stroke-width="5" fill="none" />
-        <ellipse cx="74" cy="-40" rx="30" ry="44" class="fur" transform="rotate(-20 74 -40)" />
-        <ellipse cx="-50" cy="-48" rx="28" ry="42" class="fur" transform="rotate(18 -50 -48)" />
+        <Hat Skin="@Character" Head="new(8, -252)" />
+        <ellipse cx="74" cy="-40" rx="30" ry="44" fill="@GloveFill" stroke-width="@GloveStroke" stroke="@GloveEdge" transform="rotate(-20 74 -40)" />
+        <ellipse cx="-50" cy="-48" rx="28" ry="42" fill="@GloveFill" stroke-width="@GloveStroke" stroke="@GloveEdge" transform="rotate(18 -50 -48)" />
         @* 水面盖住下半身 *@
         <path d="M-150 -42 q25 -14 50 0 t50 0 t50 0 t50 0 t50 0 t50 0 V40 H-150 Z" fill="@WaterColor" />
         <path d="M-120 -42 q25 -14 50 0 t50 0 t50 0 t50 0 t50 0" class="line" stroke-width="7" />
         <path d="M-130 -10 h40 M70 6 h50 M-40 18 h30" class="line" stroke-width="6" />
         <path d="M108 -70 l14 -20 M126 -56 l24 -10 M-110 -74 l-12 -20" class="line" stroke-width="6" />
+        <g class="splash nohit"><ellipse cx="10" cy="-30" rx="120" ry="20" fill="none" class="line" stroke-width="5" /></g>
     }
     else
     {
@@ -28,6 +35,7 @@
         <circle cx="-86" cy="-34" r="26" class="fur" />
         <ellipse cx="0" cy="-96" rx="92" ry="100" class="fur" />
         <ellipse cx="18" cy="-86" rx="52" ry="62" class="belly" />
+        <Outfit Skin="@Character" Head="new(6, -232)" Body="new(0, -96)" />
         <ellipse cx="-32" cy="-12" rx="42" ry="25" class="fur" />
         <ellipse cx="52" cy="-10" rx="42" ry="25" class="fur" />
         <circle cx="-46" cy="-292" r="27" class="fur" />
@@ -35,17 +43,19 @@
         <ellipse cx="6" cy="-232" rx="88" ry="78" class="fur" />
         <ellipse cx="50" cy="-206" rx="43" ry="31" class="belly" />
         <ellipse cx="72" cy="-222" rx="13" ry="10" fill="#1f1d1a" />
+        <Hat Skin="@Character" Head="new(6, -232)" />
         @if (Mode == FishingMode.Pole)
         {
             @* 手竿：竿架等着，眯眼 *@
             <path d="M18 -250 q10 8 20 0" class="line" stroke-width="6" fill="none" />
             <path d="M54 -192 q10 6 20 0" class="line" stroke-width="5" fill="none" />
-            <ellipse cx="-30" cy="-72" rx="26" ry="40" class="fur" transform="rotate(10 -30 -72)" />
-            <ellipse cx="76" cy="-70" rx="26" ry="40" class="fur" transform="rotate(-14 76 -70)" />
+            <ellipse cx="-30" cy="-72" rx="26" ry="40" fill="@GloveFill" stroke="@GloveEdge" stroke-width="@GloveStroke" transform="rotate(10 -30 -72)" />
+            <ellipse cx="76" cy="-70" rx="26" ry="40" fill="@GloveFill" stroke="@GloveEdge" stroke-width="@GloveStroke" transform="rotate(-14 76 -70)" />
             <g class="nohit">
                 <path d="M150 0 L170 -110 M190 0 L170 -110 M170 -110 L160 -130 M170 -110 L184 -128" class="line" stroke-width="9" />
                 <path d="M110 -40 L470 -230" class="line" stroke-width="22" />
-                <path d="M110 -40 L470 -230" stroke="#e3ea6c" stroke-width="10" stroke-linecap="round" fill="none" />
+                <path d="M110 -40 L470 -230" stroke="@RodColor" stroke-width="10" stroke-linecap="round" fill="none" />
+                <RodMarks Skin="@Rod" Points="LinePoints(110, -40, 470, -230)" />
                 <path d="M470 -230 L470 70" class="line" stroke-width="3" />
                 <g class="bobber"><path d="M448 74 a22 22 0 0 1 44 0 Z" fill="#fbf3e3" class="line" stroke-width="5" /><path d="M450 64 h40" stroke="#b98ed6" stroke-width="5" /></g>
                 <ellipse cx="470" cy="80" rx="52" ry="12" fill="none" class="line" stroke-width="5" />
@@ -58,25 +68,66 @@
             <path d="M54 -192 q10 8 20 0" class="line" stroke-width="5" fill="none" />
             <g class="nohit">
                 <path d="M60 -110 Q 230 -340 370 -330" class="line" stroke-width="24" fill="none" />
-                <path d="M60 -110 Q 230 -340 370 -330" stroke="#e3ea6c" stroke-width="12" stroke-linecap="round" fill="none" />
+                <path d="M60 -110 Q 230 -340 370 -330" stroke="@RodColor" stroke-width="12" stroke-linecap="round" fill="none" />
+                <RodMarks Skin="@Rod" Points="CurvePoints()" />
                 <path d="M370 -330 L370 70" class="line" stroke-width="3" />
                 <g class="bobber"><path d="M348 74 a22 22 0 0 1 44 0 Z" fill="#fbf3e3" class="line" stroke-width="5" /><path d="M350 64 h40" stroke="#b98ed6" stroke-width="5" /></g>
                 <ellipse cx="370" cy="80" rx="52" ry="12" fill="none" class="line" stroke-width="5" />
+                <g class="splash"><ellipse cx="370" cy="80" rx="90" ry="20" fill="none" class="line" stroke-width="5" /></g>
             </g>
-            <circle cx="70" cy="-108" r="20" fill="#fbf3e3" class="line" stroke-width="6" />
+            <circle cx="70" cy="-108" r="20" fill="@GripColor" class="line" stroke-width="6" />
             <circle cx="70" cy="-108" r="7" fill="#b98ed6" />
-            <ellipse cx="62" cy="-140" rx="44" ry="26" class="fur" />
+            <ellipse cx="62" cy="-140" rx="44" ry="26" fill="@GloveFill" stroke="@GloveEdge" stroke-width="@GloveStroke" />
         }
     }
+    </g>
 </g>
 
 @code {
     [Parameter] public FishingMode Mode { get; set; }
     [Parameter] public ScenePoint Spot { get; set; }
     [Parameter] public string WaterColor { get; set; } = "#7dbba5";
+    [Parameter] public string Character { get; set; } = "BASE_CHAR";
+    [Parameter] public string Rod { get; set; } = "BASE_ROD";
+    [Parameter] public string Glove { get; set; } = "BASE_GLOVE";
+    /// <summary>皮肤页预览里的小熊：不是命中区，不能拖窗。</summary>
+    [Parameter] public bool Preview { get; set; }
 
     /// <summary>站到右侧时转身朝左，竿和浮漂留在画面里。</summary>
     private bool FaceLeft => Spot.X > 1000;
+
+    private string RodColor => Rod switch
+    {
+        "WEB_ROD_01" => "#9fe0c8",
+        "WEB_ROD_02" => "#c9b46a",
+        "WEB_ROD_03" => "#33508a",
+        _ => "#e3ea6c",
+    };
+
+    private string GripColor => Rod == "WEB_ROD_01" ? "#fbf3e3" : Rod == "WEB_ROD_03" ? "#e8c35a" : "#fbf3e3";
+
+    private string GloveFill => Glove switch
+    {
+        "WEB_GLOVE_01" => "#f7d94c",
+        "WEB_GLOVE_02" => "#9cc463",
+        "WEB_GLOVE_03" => "#33508a",
+        _ => "#c99a7c",
+    };
+
+    private string GloveEdge => Glove == "WEB_GLOVE_03" ? "#f29a4a" : "#1f1d1a";
+    private string GloveStroke => Glove == "WEB_GLOVE_03" ? "10" : "8";
+
+    /// <summary>竿身上做装饰的几个点：直竿按线段等分。</summary>
+    private static IReadOnlyList<ScenePoint> LinePoints(double x0, double y0, double x1, double y1) =>
+        Enumerable.Range(1, 5).Select(i => new ScenePoint(x0 + (x1 - x0) * i / 6, y0 + (y1 - y0) * i / 6)).ToList();
+
+    /// <summary>路亚竿是二次曲线 (60,−110)—(230,−340)—(370,−330)，按参数等分取点。</summary>
+    private static IReadOnlyList<ScenePoint> CurvePoints() =>
+        Enumerable.Range(1, 5).Select(i =>
+        {
+            double t = i / 6.0, u = 1 - t;
+            return new ScenePoint(u * u * 60 + 2 * u * t * 230 + t * t * 370, u * u * -110 + 2 * u * t * -340 + t * t * -330);
+        }).ToList();
 
     private static string F(double v) => v.ToString("0.###", System.Globalization.CultureInfo.InvariantCulture);
 }

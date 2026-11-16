@@ -1,7 +1,7 @@
 @* 小窗场景（1600×900 画布）。天空不画：真透明（DEC-04）。
    命中：岸=shore（单击选位），水=water（按住拖窗/摸鱼时单击选位），角色=character（按住拖窗）；
    植物、荷叶、竿线等装饰不接指针，点到它们等于点到下面的岸/水或透明处（01 §4）。 *@
-<svg class="scene" viewBox="0 0 1600 900" xmlns="http://www.w3.org/2000/svg">
+<svg class="scene" viewBox="0 0 1600 900" xmlns="http://www.w3.org/2000/svg" data-scene="@SceneSkin">
     @* 岸后的灌木 *@
     <g class="nohit">
         <path d="M-20 560 C-10 470 60 450 110 480 C130 420 220 420 250 470 C290 440 360 460 370 530 L370 560 Z" fill="@P.Bush" class="line" stroke-linejoin="round" />
@@ -13,6 +13,17 @@
 
     @* 水 *@
     <rect data-hit="water" data-drag-target="pet" x="-10" y="592" width="1620" height="190" fill="@P.Water" class="line" />
+
+    @* 设为背景的鱼缸：缸里的鱼在水里游，统一比例、不接指针（WA-04、B1 Q11 假设 A） *@
+    @{ var bg = BackgroundFish; var bgScale = BackgroundScale; }
+    @for (int i = 0; i < bg.Count; i++)
+    {
+        var f = bg[i];
+        var (x, y) = SwimSpot(i);
+        <g class="bg-fish nohit" data-fish="@f.Id" data-len="@f.LengthMm" style="animation-duration:@(9 + i % 5)s;animation-delay:-@(i * 1.7 % 9)s">
+            <Fish Species="@f.SpeciesId" X="x" Y="y" Length="@(f.LengthMm * bgScale)" />
+        </g>
+    }
 
     <g class="nohit">
         <path d="M560 760 h60 M840 740 h80 M1480 748 h70 M1000 612 h50 M300 640 h40" class="line" stroke-width="6" />
@@ -44,9 +55,11 @@
         }
     </g>
 
+    <SceneDecor Skin="@SceneSkin" />
+
     @if (Spot is { } spot)
     {
-        <Bear Mode="Mode" Spot="spot" WaterColor="@P.Water" />
+        <Bear Mode="Mode" Spot="spot" WaterColor="@P.Water" Character="@Equipped(SkinCategory.Character)" Rod="@Equipped(SkinCategory.Rod)" Glove="@Equipped(SkinCategory.Glove)" />
     }
 
     @if (Session.NoRoomAt is { } at)
@@ -75,6 +88,21 @@
         1 => new Palette("#7fbfd0", "#b3c97a", "#8fbf6a"),
         _ => new Palette("#9fd3e3", "#e8d7a8", "#a7c977"),
     };
+
+    private string Equipped(SkinCategory c) => Session.Play?.EquippedId(c) ?? Session.Skins.BaseOf(c).Id;
+    private string SceneSkin => Equipped(SkinCategory.Scene);
+
+    private List<FishRecord> BackgroundFish =>
+        Session.Play is { Profile.BackgroundTankId: { } tank } play ? play.InTank(tank).ToList() : new();
+
+    /// <summary>
+    /// 背景鱼每毫米画多少单位：场景里所有鱼共用一个比例（B1 Q11 假设 A），
+    /// 按最长的那条定成约占场景宽四分之一；只有小鱼时不放大过头。
+    /// </summary>
+    private double BackgroundScale => Math.Min(1.0, 400.0 / Math.Max(1, BackgroundFish.Select(f => f.LengthMm).DefaultIfEmpty(1).Max()));
+
+    /// <summary>第 i 条鱼游的位置：在水里错开排开，按编号固定，刷新不乱跳。</summary>
+    private static (double X, double Y) SwimSpot(int i) => (180 + (i * 337) % 1240, 630 + (i * 53) % 130);
 
     private sealed record Palette(string Water, string Shore, string Bush);
 

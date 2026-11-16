@@ -8,6 +8,7 @@ builder.RootComponents.Add<App>("#app");
 builder.RootComponents.Add<HeadOutlet>("head::after");
 
 builder.Services.AddScoped<PrefsStore>();
+builder.Services.AddScoped<ProfileStore>();
 builder.Services.AddScoped<PetSession>();
 
 await builder.Build().RunAsync();

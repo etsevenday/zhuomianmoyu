@@ -1,0 +1,27 @@
+@* 人物外观里戴在头上、围在脖子上的部分（B1 Q12 假设 A 的占位画法）：画在头之后。 *@
+@switch (Skin)
+{
+    case "WEB_CHAR_01":
+        @* 草帽 *@
+        <ellipse cx="@F(Head.X)" cy="@F(Head.Y - 52)" rx="124" ry="24" fill="#f2d58a" class="line" stroke-width="7" />
+        <path d="M@(F(Head.X - 62)) @(F(Head.Y - 56)) C@(F(Head.X - 58)) @(F(Head.Y - 128)) @(F(Head.X + 58)) @(F(Head.Y - 128)) @(F(Head.X + 62)) @(F(Head.Y - 56)) Z" fill="#f2d58a" class="line" stroke-width="7" />
+        <path d="M@(F(Head.X - 60)) @(F(Head.Y - 70)) H@(F(Head.X + 60))" stroke="#e0705a" stroke-width="12" />
+        break;
+    case "WEB_CHAR_02":
+        @* 雨帽：宽后檐 *@
+        <path d="M@(F(Head.X - 110)) @(F(Head.Y - 30)) C@(F(Head.X - 90)) @(F(Head.Y - 140)) @(F(Head.X + 90)) @(F(Head.Y - 140)) @(F(Head.X + 110)) @(F(Head.Y - 40)) C@(F(Head.X + 60)) @(F(Head.Y - 64)) @(F(Head.X - 60)) @(F(Head.Y - 64)) @(F(Head.X - 110)) @(F(Head.Y - 30)) Z" fill="#f7d94c" class="line" stroke-width="7" />
+        break;
+    case "WEB_CHAR_03":
+        @* 条纹领巾：红白条，一角垂下 *@
+        <ellipse cx="@F(Head.X)" cy="@F(Head.Y + 74)" rx="78" ry="20" fill="#e0705a" class="line" stroke-width="6" />
+        <path d="M@(F(Head.X - 50)) @(F(Head.Y + 60)) v28 M@(F(Head.X - 16)) @(F(Head.Y + 56)) v36 M@(F(Head.X + 18)) @(F(Head.Y + 56)) v36 M@(F(Head.X + 52)) @(F(Head.Y + 60)) v28" stroke="#fbf3e3" stroke-width="9" />
+        <path d="M@(F(Head.X - 40)) @(F(Head.Y + 86)) l-18 58 l34 -10 Z" fill="#e0705a" class="line" stroke-width="5" />
+        break;
+}
+
+@code {
+    [Parameter] public string Skin { get; set; } = "BASE_CHAR";
+    [Parameter] public ScenePoint Head { get; set; }
+
+    private static string F(double v) => v.ToString("0.###", System.Globalization.CultureInfo.InvariantCulture);
+}
