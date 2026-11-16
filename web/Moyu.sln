@@ -1,0 +1,34 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Moyu.Core", "Moyu.Core\Moyu.Core.csproj", "{CC61FB50-AD6F-40E0-879D-F71A8262B663}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Moyu.Core.Tests", "Moyu.Core.Tests\Moyu.Core.Tests.csproj", "{4EECE83D-C701-491B-8788-5F2EA467BDAE}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Moyu.Web", "Moyu.Web\Moyu.Web.csproj", "{2B50E1EF-B450-4615-A39A-85A46562245E}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{CC61FB50-AD6F-40E0-879D-F71A8262B663}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CC61FB50-AD6F-40E0-879D-F71A8262B663}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CC61FB50-AD6F-40E0-879D-F71A8262B663}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CC61FB50-AD6F-40E0-879D-F71A8262B663}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4EECE83D-C701-491B-8788-5F2EA467BDAE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4EECE83D-C701-491B-8788-5F2EA467BDAE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4EECE83D-C701-491B-8788-5F2EA467BDAE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4EECE83D-C701-491B-8788-5F2EA467BDAE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2B50E1EF-B450-4615-A39A-85A46562245E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2B50E1EF-B450-4615-A39A-85A46562245E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2B50E1EF-B450-4615-A39A-85A46562245E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2B50E1EF-B450-4615-A39A-85A46562245E}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal

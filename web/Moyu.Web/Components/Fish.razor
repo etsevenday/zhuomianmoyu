@@ -1,0 +1,31 @@
+@* 示例鱼（SVG 片段）。按"单位长度 100、鼻尖朝左"画，再按 Length 缩放：同一画面里的鱼共用尺度（03 §4）。 *@
+<g transform="translate(@F(X) @F(Y)) scale(@F(Length / 100))">
+    @if (Look == FishLook.Silver)
+    {
+        <path d="M-50 0 C-40 -15 20 -17 30 -5 L50 -15 L44 0 L50 15 L30 5 C20 16 -40 15 -50 0 Z" fill="#f4eefb" stroke="#1f1d1a" stroke-width="3.5" stroke-linejoin="round" />
+        <path d="M-44 -5 C-30 -13 18 -14 28 -5 C10 -1 -20 -1 -44 -5 Z" fill="#c9a6e6" />
+        <path d="M-8 10 L-2 18 L4 10" fill="#c9a6e6" stroke="#1f1d1a" stroke-width="3" stroke-linejoin="round" />
+        <circle cx="-38" cy="-3" r="3" fill="#1f1d1a" />
+    }
+    else
+    {
+        <path d="M8 0 C28 -42 62 -48 56 -12 C70 0 62 32 50 38 C40 26 24 14 8 0 Z" fill="#fbf6fb" stroke="#1f1d1a" stroke-width="3.5" stroke-linejoin="round" />
+        <path d="M30 -24 C40 -30 50 -28 50 -18 C44 -14 36 -16 30 -24 Z M34 18 C42 16 50 22 48 30 C42 28 36 24 34 18 Z" fill="#c9a6e6" />
+        <path d="M-10 -14 C-4 -34 14 -36 18 -20" fill="#fbf6fb" stroke="#1f1d1a" stroke-width="3" />
+        <ellipse cx="-18" cy="0" rx="28" ry="17" fill="#fbf6fb" stroke="#1f1d1a" stroke-width="3.5" />
+        <circle cx="-14" cy="-6" r="6" fill="#c9a6e6" />
+        <circle cx="0" cy="6" r="5" fill="#c9a6e6" />
+        <circle cx="-36" cy="-3" r="3" fill="#1f1d1a" />
+    }
+</g>
+
+@code {
+    [Parameter] public FishLook Look { get; set; }
+    /// <summary>鱼的中心。</summary>
+    [Parameter] public double X { get; set; }
+    [Parameter] public double Y { get; set; }
+    /// <summary>画出来的全长（父画布单位）。</summary>
+    [Parameter] public double Length { get; set; } = 100;
+
+    private static string F(double v) => v.ToString("0.###", System.Globalization.CultureInfo.InvariantCulture);
+}

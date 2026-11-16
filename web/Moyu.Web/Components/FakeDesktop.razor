@@ -1,0 +1,205 @@
+@* 网页版的模拟桌面：1920×1080 逻辑像素，按视口等比缩放（js/pet.js fit）。
+   壁纸、桌面图标、记事本、任务栏都是"下层应用"，用来验证小窗透明区穿透（UI-02、TECH-03）。 *@
+@implements IDisposable
+@inject PetSession Session
+@inject IJSRuntime JS
+
+<div class="viewport">
+    <div class="desktop" @ref="_desktop" @onclick="ClearIconSelection">
+        <div class="icons">
+            @foreach (var icon in Icons)
+            {
+                <button class="desk-icon @(_selectedIcon == icon.Id ? "sel" : "")"
+                        @onclick="() => SelectIcon(icon.Id)" @onclick:stopPropagation="true"
+                        @ondblclick="() => OpenIcon(icon.Id)">
+                    <span class="glyph @icon.Id"></span>
+                    <span class="label">@icon.Label</span>
+                </button>
+            }
+        </div>
+
+        @if (_notepadOpen)
+        {
+            <div id="notepad" class="app-window" style="left:@(_notepadX)px;top:@(_notepadY)px" @onclick:stopPropagation="true">
+                <div class="app-title" data-hit="app-title" data-drag-target="notepad">
+                    <span>记事本 — 今天的工作.txt</span>
+                    <button class="app-close" title="关闭" @onclick="() => _notepadOpen = false">×</button>
+                </div>
+                <textarea spellcheck="false">@NotepadText</textarea>
+            </div>
+        }
+
+        @if (_loaded && !Pet.State.Closed)
+        {
+            @if (Pet.State.Collapsed)
+            {
+                @* 收起：缩成头像留在原处，单击恢复，可拖动（B0 Q1 按建议 A，待策划答复） *@
+                <div id="avatar" class="avatar" data-hit="avatar" data-drag-target="avatar" title="恢复"
+                     style="left:@Px(Pet.AvatarPosition.X);top:@Px(Pet.AvatarPosition.Y);width:@Px(Pet.Layout.AvatarSize);height:@Px(Pet.Layout.AvatarSize)"
+                     @onclick:stopPropagation="true">
+                    <img src="img/icon.svg" alt="" draggable="false" />
+                </div>
+            }
+            else
+            {
+                <PetWindow Session="Session" OnCommit="Commit" />
+            }
+        }
+
+        @if (_dev)
+        {
+            <div class="dev-strip" @onclick:stopPropagation="true">
+                <b>开发</b>
+                <button @onclick="Session.SimulateCatch">模拟鱼获</button>
+                <button @onclick="ResetPrefs">重置小窗</button>
+            </div>
+        }
+
+        <div class="placeholder-note">网页试玩版 · 界面文字与美术均为占位</div>
+
+        <div class="taskbar" @onclick:stopPropagation="true">
+            <button class="start" title="开始"><span></span><span></span><span></span><span></span></button>
+            <button class="task @(_notepadOpen ? "open" : "")" title="记事本" @onclick="() => _notepadOpen = true">
+                <span class="glyph notepad"></span>
+            </button>
+            <button class="task @(Pet.State.Closed ? "" : "open")" title="桌面摸鱼" @onclick="TaskbarPet">
+                <img src="img/icon.svg" alt="" />
+            </button>
+            <div class="clock">@DateTime.Now.ToString("HH:mm")<br />@DateTime.Now.ToString("yyyy/M/d")</div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private ElementReference _desktop;
+    private DotNetObjectReference<FakeDesktop>? _ref;
+    private Timer? _clock;
+    private bool _loaded;
+    private bool _dev;
+    private string? _selectedIcon;
+    private bool _notepadOpen = true;
+    private int _notepadX = 300;
+    private int _notepadY = 150;
+
+    private PetController Pet => Session.Pet;
+
+    private sealed record DeskIcon(string Id, string Label);
+
+    private static readonly DeskIcon[] Icons =
+    {
+        new("computer", "此电脑"),
+        new("trash", "回收站"),
+        new("notepad", "记事本"),
+        new("folder", "工作资料"),
+        new("pet", "桌面摸鱼"),
+    };
+
+    private const string NotepadText =
+        "今天的待办\n\n1. 整理周报\n2. 回复邮件\n3. 下午三点开会\n\n" +
+        "（这是假桌面上的记事本，用来模拟“正在工作的软件”。\n小窗透明区穿透开着时，点到小窗留白处，点击会落到这里或桌面上。）";
+
+    protected override async Task OnInitializedAsync()
+    {
+        Session.Changed += OnChanged;
+        await Session.LoadAsync();
+        _loaded = true;
+        _clock = new Timer(_ => InvokeAsync(StateHasChanged), null, 30000, 30000);
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+        _ref = DotNetObjectReference.Create(this);
+        await JS.InvokeVoidAsync("moyuPet.init", _ref, _desktop);
+        _dev = await JS.InvokeAsync<bool>("moyuPet.isDev");
+        if (_dev) StateHasChanged();
+    }
+
+    private void OnChanged() => InvokeAsync(StateHasChanged);
+
+    private Task Commit() => Session.CommitAsync();
+
+    [JSInvokable]
+    public Task OnWindowMoved(double x, double y)
+    {
+        Pet.MoveWindow(x, y);
+        return Commit();
+    }
+
+    [JSInvokable]
+    public Task OnAvatarMoved(double x, double y)
+    {
+        Pet.MoveAvatar(x, y);
+        return Commit();
+    }
+
+    [JSInvokable]
+    public Task OnAvatarClicked()
+    {
+        Pet.Restore();
+        return Commit();
+    }
+
+    private CancellationTokenSource? _noRoomCts;
+
+    [JSInvokable]
+    public async Task OnSceneClicked(string kind, double x, double y)
+    {
+        var result = Pet.ClickScene(new ScenePoint(x, y));
+        if (result == PlaceResult.NoRoom)
+        {
+            _noRoomCts?.Cancel();
+            var cts = _noRoomCts = new CancellationTokenSource();
+            Session.NoRoomAt = new ScenePoint(x, y);
+            await Commit();
+            try
+            {
+                await Task.Delay(1500, cts.Token);
+                Session.NoRoomAt = null;
+                StateHasChanged();
+            }
+            catch (TaskCanceledException) { }
+            return;
+        }
+        if (result == PlaceResult.Placed) Session.NoRoomAt = null;
+        await Commit();
+    }
+
+    private void SelectIcon(string id) => _selectedIcon = id;
+
+    private void ClearIconSelection() => _selectedIcon = null;
+
+    private Task OpenIcon(string id)
+    {
+        if (id == "notepad") _notepadOpen = true;
+        if (id == "pet")
+        {
+            Pet.Reopen();
+            return Commit();
+        }
+        return Task.CompletedTask;
+    }
+
+    private Task TaskbarPet()
+    {
+        if (Pet.State.Closed) Pet.Reopen();
+        else if (Pet.State.Collapsed) Pet.Restore();
+        else Pet.Collapse();
+        return Commit();
+    }
+
+    private async Task ResetPrefs()
+    {
+        await JS.InvokeVoidAsync("moyuPet.save", "moyu.prefs.v1", "");
+        await Session.LoadAsync();
+    }
+
+    private static string Px(double v) => v.ToString("0.###", System.Globalization.CultureInfo.InvariantCulture) + "px";
+
+    public void Dispose()
+    {
+        Session.Changed -= OnChanged;
+        _clock?.Dispose();
+        _ref?.Dispose();
+    }
+}

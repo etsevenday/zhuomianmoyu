@@ -1,0 +1,269 @@
+@* 管理面板（1600×900 设计稿坐标）。同一时刻只开一个（01 §2）；面板是实体，不铺全窗遮罩。
+   第一阶段全是只读布局：出售、收藏、抽取等依赖未定规则的按钮一律不可点，不假装成功（UI-10）。
+   面板里的字【交文案策划定】，B0 Q5 定稿前照效果图占位。 *@
+@switch (Pet.State.Panel)
+{
+    case Panel.ModeMenu:
+        <div class="popup solid mode-menu">
+            <div class="popup-head"><b>玩法模式</b><button class="x" title="关闭" @onclick="Close"><Icon Name="close" /></button></div>
+            @foreach (var m in Enum.GetValues<FishingMode>())
+            {
+                <button class="opt @(Pet.State.Mode == m ? "lime" : "")" @onclick="() => SwitchMode(m)">
+                    <Icon Name="@PetWindow.ModeIcon(m)" /><span>@PetWindow.ModeName(m)</span>
+                    @if (Pet.State.Mode == m) { <Icon Name="check" Class="tick" /> }
+                </button>
+            }
+        </div>
+        break;
+
+    case Panel.More:
+        <div class="popup solid more-menu">
+            <div class="popup-head"><b>更多</b><button class="x" title="关闭" @onclick="Close"><Icon Name="close" /></button></div>
+            <button class="row" @onclick="() => Open(Panel.Map)"><Icon Name="map" /><span>地图</span></button>
+            <button class="row" @onclick="() => Open(Panel.Skin)"><Icon Name="rod" /><span>皮肤</span></button>
+            <button class="row" @onclick="() => Open(Panel.Settings)"><Icon Name="gear" /><span>设置</span></button>
+        </div>
+        break;
+
+    case Panel.Basket:
+        <div class="panel solid basket">
+            <PanelHead Title="鱼篓" OnClose="Close" />
+            <div class="panel-body split">
+                <div class="fish-list">
+                    @foreach (var f in Session.Basket)
+                    {
+                        <button class="fish-cell @(f.Id == Session.SelectedFishId ? "on" : "")" @onclick="() => Select(f.Id)">
+                            <svg viewBox="-60 -40 120 80"><Fish Look="f.Look" Length="100" /></svg>
+                        </button>
+                    }
+                </div>
+                <div class="fish-detail">
+                    @if (Session.Basket.FirstOrDefault(f => f.Id == Session.SelectedFishId) is { } sel)
+                    {
+                        <svg viewBox="-60 -40 120 80" class="big"><Fish Look="sel.Look" Length="100" /></svg>
+                        <div class="name">@sel.Name</div>
+                        <div class="len">@sel.LengthCm.ToString("0.0") cm</div>
+                        <div class="chip">售价待定</div>
+                    }
+                </div>
+            </div>
+            <div class="panel-actions">
+                <button class="btn purple" disabled title="出售规则待定">出售</button>
+                <button class="btn lime" disabled title="收藏规则待定">放入收藏</button>
+            </div>
+            <div class="sample-note">示例数据</div>
+        </div>
+        break;
+
+    case Panel.Collection:
+        <div class="panel solid collection">
+            <PanelHead Title="收藏室" OnClose="Close" />
+            <div class="panel-body split">
+                <div class="tank-wrap">
+                    <div class="label">背景预览</div>
+                    @* 同一鱼缸共用尺度：两条示例鱼按体长等比（CONTENT-04） *@
+                    <svg class="tank" viewBox="0 0 600 300">
+                        <rect x="6" y="6" width="588" height="288" rx="18" fill="#8cc9b2" class="line" />
+                        <path d="M6 40 H594" stroke="#b9e3d3" stroke-width="16" />
+                        <path d="M60 290 C40 230 80 200 60 140 M90 290 C110 240 80 210 100 170 M520 290 C500 220 540 200 520 150" stroke="#a9c96a" stroke-width="12" fill="none" stroke-linecap="round" />
+                        <path d="M20 294 C40 260 100 260 120 294 Z M440 294 C460 262 520 262 560 294 Z" fill="#a8a8ad" class="line" />
+                        <Fish Look="FishLook.BigTail" X="230" Y="160" Length="@(TankScale * SampleData.BigTailFish.LengthCm)" />
+                        <Fish Look="FishLook.Silver" X="430" Y="120" Length="@(TankScale * SampleData.SilverFish.LengthCm)" />
+                    </svg>
+                </div>
+                <div class="tank-list">
+                    <button class="tank-item on"><span class="mini"></span><span>鱼缸一</span></button>
+                    <button class="tank-item"><span class="mini"></span><span>鱼缸二</span></button>
+                    <button class="more-tanks" disabled title="鱼缸规则待定">更多鱼缸 <Icon Name="chevron" /></button>
+                </div>
+            </div>
+            <div class="panel-actions">
+                <button class="btn lime" disabled title="规则待定">设为背景</button>
+                <button class="btn purple" disabled title="规则待定">管理鱼只</button>
+            </div>
+            <div class="sample-note">示例数据</div>
+        </div>
+        break;
+
+    case Panel.Records:
+        <div class="panel solid records">
+            <PanelHead Title="记录" OnClose="Close" />
+            <div class="panel-body split">
+                <div class="record-list">
+                    @for (int i = 0; i < SampleData.Records.Length; i++)
+                    {
+                        var idx = i;
+                        var r = SampleData.Records[i];
+                        <button class="record-row @(_record == idx ? "on" : "") @(r.Fish == null ? "unknown" : "")" @onclick="() => _record = idx">
+                            <span>@r.Label</span>
+                        </button>
+                    }
+                </div>
+                <div class="fish-detail">
+                    @if (SampleData.Records[_record].Fish is { } rf)
+                    {
+                        <svg viewBox="-60 -40 120 80" class="big"><Fish Look="rf.Look" Length="100" /></svg>
+                        <div class="name">@rf.Name</div>
+                        <div class="len">@rf.LengthCm.ToString("0.0") cm</div>
+                    }
+                    else
+                    {
+                        <div class="unknown-big">？</div>
+                    }
+                </div>
+            </div>
+            <div class="sample-note">示例数据</div>
+        </div>
+        break;
+
+    case Panel.Map:
+        <div class="panel solid map-panel">
+            <PanelHead Title="地图选择" OnClose="Close" />
+            <div class="map-list">
+                @for (int i = 0; i < Pet.Maps.All.Count; i++)
+                {
+                    var map = Pet.Maps.All[i];
+                    var on = map.Id == Pet.State.MapId;
+                    <button class="map-row @(on ? "on" : "")" @onclick="() => SelectMap(map.Id)">
+                        <span class="thumb t@(i)"></span>
+                        <span class="name">@map.PlaceholderName</span>
+                        <span class="radio">@if (on) { <Icon Name="check" /> }</span>
+                    </button>
+                }
+            </div>
+        </div>
+        break;
+
+    case Panel.Skin:
+        <div class="panel solid skin">
+            <PanelHead Title="皮肤" OnClose="Close" />
+            <div class="tabs">
+                @foreach (var t in SkinTabs)
+                {
+                    <button class="pill tabpill @(_skinTab == t ? "lime" : "")" @onclick="() => _skinTab = t">@t</button>
+                }
+            </div>
+            <div class="panel-body split">
+                <div class="preview">
+                    <div class="label">外观预览</div>
+                    <svg viewBox="0 0 400 220" class="skin-preview">
+                        <path d="M40 200 Q 200 20 380 30" class="line" stroke-width="30" fill="none" />
+                        <path d="M40 200 Q 200 20 380 30" stroke="#d9b6ef" stroke-width="16" stroke-linecap="round" fill="none" />
+                        <circle cx="110" cy="150" r="30" fill="#fbf3e3" class="line" stroke-width="7" />
+                        <circle cx="110" cy="150" r="11" fill="#b98ed6" />
+                    </svg>
+                </div>
+                <div class="draw">
+                    <div class="cost">消耗待定</div>
+                    <button class="btn lime big" disabled title="抽取规则待定">抽取</button>
+                    <button class="btn" disabled title="抽取内容待定">查看内容</button>
+                </div>
+            </div>
+        </div>
+        break;
+
+    case Panel.Settings:
+        <div class="panel solid settings">
+            <PanelHead Title="设置" OnClose="Close" />
+            <div class="setting-rows">
+                @* 置顶、后台输入在网页版不显示（B0 Q2 按建议 A，待策划答复） *@
+                <div class="setting-row">
+                    <span>透明区穿透</span>
+                    <Toggle On="Pet.State.Settings.Passthrough" OnChange="SetPassthrough" />
+                </div>
+                <div class="setting-row">
+                    <span>静音</span>
+                    <Toggle On="Pet.State.Settings.Mute" OnChange="SetMute" />
+                </div>
+            </div>
+        </div>
+        break;
+
+    case Panel.Room:
+        <div class="panel solid room">
+            <PanelHead Title="房间" OnClose="Close" />
+            <div class="room-body">
+                <div class="member"><img src="img/icon.svg" alt="" /><span>我</span></div>
+                <div class="member empty"><span>＋</span></div>
+            </div>
+            <div class="panel-actions">
+                <button class="btn lime" disabled title="Steam 联机在 PC 端实现">邀请好友</button>
+            </div>
+            <div class="sample-note">网页版暂无联机</div>
+        </div>
+        break;
+}
+
+@if (Session.CatchToast is { } fish && Pet.State.Panel == Panel.None)
+{
+    @* 新鱼获轻提示：鱼已经在鱼篓里了；关掉提示不影响鱼篓（UI-07） *@
+    <div class="toast solid">
+        <div class="toast-head"><b>新鱼获</b><button class="x" title="关闭" @onclick="CloseToast"><Icon Name="close" /></button></div>
+        <div class="toast-body">
+            <svg viewBox="-60 -40 120 80"><Fish Look="fish.Look" Length="100" /></svg>
+            <span class="sep"></span>
+            <span class="len">@fish.LengthCm.ToString("0.0") cm</span>
+            <button class="toast-basket" title="打开鱼篓" @onclick="OpenBasketFromToast"><Icon Name="basket" /></button>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter, EditorRequired] public PetSession Session { get; set; } = null!;
+    [Parameter] public EventCallback OnChanged { get; set; }
+
+    private PetController Pet => Session.Pet;
+    private int _record;
+    private static readonly string[] SkinTabs = { "人物", "鱼竿", "手套", "场景" };
+    private string _skinTab = "鱼竿";
+
+    /// <summary>收藏室鱼缸里 1 cm 画多少单位：按最大示例鱼占缸宽约 45% 定。</summary>
+    private static double TankScale => 270 / SampleData.BigTailFish.LengthCm;
+
+    private Task Close()
+    {
+        Pet.ClosePanel();
+        return OnChanged.InvokeAsync();
+    }
+
+    private Task Open(Panel p)
+    {
+        Pet.TogglePanel(p);
+        return OnChanged.InvokeAsync();
+    }
+
+    private Task SwitchMode(FishingMode m)
+    {
+        Pet.SwitchMode(m);
+        return OnChanged.InvokeAsync();
+    }
+
+    private Task SelectMap(string id)
+    {
+        Pet.SelectMap(id);
+        return OnChanged.InvokeAsync();
+    }
+
+    private Task SetPassthrough(bool on)
+    {
+        Pet.SetPassthrough(on);
+        return OnChanged.InvokeAsync();
+    }
+
+    private Task SetMute(bool on)
+    {
+        Pet.SetMute(on);
+        return OnChanged.InvokeAsync();
+    }
+
+    private void Select(int id) => Session.SelectedFishId = id;
+
+    private void CloseToast() => Session.CatchToast = null;
+
+    private Task OpenBasketFromToast()
+    {
+        if (Session.CatchToast is { } f) Session.SelectedFishId = f.Id;
+        Session.CatchToast = null;
+        return Open(Panel.Basket);
+    }
+}

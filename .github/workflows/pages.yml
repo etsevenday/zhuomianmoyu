@@ -1,0 +1,75 @@
+name: 测试并发布到 GitHub Pages
+
+on:
+  push:
+    branches: [main]
+    # 网站只由 src/、web/ 构建。只改文档、协作说明、工具脚本的推送不构建：
+    # 策划案先于实现时不发失败邮件；开发方的纯文档提交（待确认问题、开发记录）也不用每次重发一遍网站。
+    # 一次推送里只要有一个文件不在下面这些路径里，照常构建。
+    paths-ignore:
+      - 'doc/**'
+      - 'AGENTS.md'
+      - 'README.md'
+      - '.claude/**'
+      - 'tools/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: 内核测试
+        run: dotnet test web/Moyu.sln -c Release
+
+      - name: 发布 Blazor WebAssembly
+        run: dotnet publish web/Moyu.Web -c Release -o publish
+
+      - name: 适配 Pages 子路径
+        run: |
+          REPO="${GITHUB_REPOSITORY#*/}"
+          sed -i "s|<base href=\"/\" />|<base href=\"/${REPO}/\" />|" publish/wwwroot/index.html
+          BUILD="$(date -u +%Y-%m-%d) · ${GITHUB_SHA::7}"
+          sed -i "s|<meta name=\"app-build\" content=\"本地开发版\" />|<meta name=\"app-build\" content=\"${BUILD}\" />|" publish/wwwroot/index.html
+          sed -i "s|</body>|<div style=\"position:fixed;left:6px;bottom:2px;font-size:11px;color:#8b90a0;pointer-events:none;z-index:999\">构建 ${BUILD}</div></body>|" publish/wwwroot/index.html
+          # 自写的脚本与样式加上提交号，发布后浏览器立即取新文件，不用旧缓存
+          sed -i "s|?v=dev|?v=${GITHUB_SHA::7}|g" publish/wwwroot/index.html
+          cp publish/wwwroot/index.html publish/wwwroot/404.html
+          touch publish/wwwroot/.nojekyll
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: publish/wwwroot
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.retry.outputs.page_url || steps.deployment.outputs.page_url }}
+    steps:
+      # 沿用适者生存：Pages 发布偶尔卡满 10 分钟超时；第一次只等 3 分钟，不成自动再发一次
+      - id: deployment
+        uses: actions/deploy-pages@v4
+        continue-on-error: true
+        with:
+          timeout: 180000
+      - id: retry
+        if: steps.deployment.outcome == 'failure'
+        uses: actions/deploy-pages@v4

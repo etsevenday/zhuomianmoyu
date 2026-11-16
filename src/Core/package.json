@@ -1,0 +1,7 @@
+{
+  "name": "com.moyu.core",
+  "version": "0.1.0",
+  "displayName": "Moyu Core",
+  "description": "桌面摸鱼纯 C# 内核：桌面小窗布局、玩法模式、地图区域与选位。不依赖 UnityEngine。",
+  "unity": "2022.3"
+}

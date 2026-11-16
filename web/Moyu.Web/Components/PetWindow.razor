@@ -1,0 +1,88 @@
+@* 16:9 透明小窗。外层是桌面逻辑像素（480×270），里层按 1600×900 设计稿排版后整体缩放。
+   穿透开（默认）：外层不接指针，只有画出来的实体（岸、水、角色、按钮、面板）接；
+   穿透关：外层也接指针，留白点了没反应、仍然透明（DEC-09）。 *@
+<div id="pet" class="pet @(Pet.State.Settings.Passthrough ? "" : "capture")"
+     style="left:@Px(Pet.State.Window.X);top:@Px(Pet.State.Window.Y);width:@Px(Pet.Layout.WindowWidth);height:@Px(Pet.Layout.WindowHeight)">
+    <div class="design" style="transform:scale(@F(Pet.Layout.WindowWidth / SceneCanvas.Width))">
+        <PetScene Session="Session" />
+
+        <div class="topbar">
+            <button class="pill purple solid @(Pet.State.Panel == Panel.Room ? "on" : "")" title="房间" @onclick="() => Toggle(Panel.Room)">
+                <Icon Name="people" /><span>房间</span>
+            </button>
+            <button class="pill purple solid round" title="@(Pet.State.Settings.Mute ? "取消静音" : "静音")" @onclick="ToggleMute">
+                <Icon Name="@(Pet.State.Settings.Mute ? "mute" : "sound")" />
+            </button>
+            <button class="pill solid round" title="收起" @onclick="Collapse"><Icon Name="minus" /></button>
+            <button class="pill solid round" title="关闭" @onclick="Close"><Icon Name="close" /></button>
+        </div>
+
+        <PetPanels Session="Session" OnChanged="Commit" />
+
+        <div class="bottombar solid">
+            <button class="pill lime mode" @onclick="() => Toggle(Panel.ModeMenu)">
+                <Icon Name="@ModeIcon(Pet.State.Mode)" /><span>@ModeName(Pet.State.Mode)</span><Icon Name="caret" Class="caret" />
+            </button>
+            <button class="pill tab @On(Panel.Basket)" @onclick="() => Toggle(Panel.Basket)"><Icon Name="basket" /><span>鱼篓</span></button>
+            <button class="pill tab @On(Panel.Collection)" @onclick="() => Toggle(Panel.Collection)"><Icon Name="star" /><span>收藏</span></button>
+            <button class="pill tab @On(Panel.Records)" @onclick="() => Toggle(Panel.Records)"><Icon Name="list" /><span>记录</span></button>
+            <button class="pill tab @(MoreOn ? "on" : "")" @onclick="() => Toggle(Panel.More)"><Icon Name="gear" /><span>更多</span></button>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter, EditorRequired] public PetSession Session { get; set; } = null!;
+    [Parameter] public EventCallback OnCommit { get; set; }
+
+    private PetController Pet => Session.Pet;
+
+    // 模式名与按钮文字【交文案策划定】，B0 Q5 定稿前用效果图上的字
+    public static string ModeName(FishingMode m) => m switch
+    {
+        FishingMode.Lure => "路亚",
+        FishingMode.Wade => "摸鱼",
+        _ => "手竿",
+    };
+
+    public static string ModeIcon(FishingMode m) => m switch
+    {
+        FishingMode.Lure => "rod",
+        FishingMode.Wade => "hand",
+        _ => "pole",
+    };
+
+    private string On(Panel p) => Pet.State.Panel == p ? "on" : "";
+    private bool MoreOn => Pet.State.Panel is Panel.More or Panel.Map or Panel.Skin or Panel.Settings;
+
+    private Task Toggle(Panel p)
+    {
+        // 地图/皮肤/设置是从"更多"进去的，此时再点"更多"就关掉
+        if (p == Panel.More && MoreOn && Pet.State.Panel != Panel.More) Pet.ClosePanel();
+        else Pet.TogglePanel(p);
+        return Commit();
+    }
+
+    private Task ToggleMute()
+    {
+        Pet.SetMute(!Pet.State.Settings.Mute);
+        return Commit();
+    }
+
+    private Task Collapse()
+    {
+        Pet.Collapse();
+        return Commit();
+    }
+
+    private Task Close()
+    {
+        Pet.Close();
+        return Commit();
+    }
+
+    private Task Commit() => OnCommit.InvokeAsync();
+
+    private static string F(double v) => v.ToString("0.###", System.Globalization.CultureInfo.InvariantCulture);
+    private static string Px(double v) => F(v) + "px";
+}

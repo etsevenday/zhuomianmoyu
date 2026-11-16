@@ -1,0 +1,9 @@
+<div class="panel-head">
+    <b>@Title</b>
+    <button class="x" title="关闭" @onclick="OnClose"><Icon Name="close" /></button>
+</div>
+
+@code {
+    [Parameter, EditorRequired] public string Title { get; set; } = "";
+    [Parameter] public EventCallback OnClose { get; set; }
+}

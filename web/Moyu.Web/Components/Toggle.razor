@@ -1,0 +1,9 @@
+<button class="toggle @(On ? "on" : "")" role="switch" aria-checked="@(On ? "true" : "false")" @onclick="() => OnChange.InvokeAsync(!On)">
+    <span class="knob"></span>
+    <span class="txt">@(On ? "开" : "关")</span>
+</button>
+
+@code {
+    [Parameter] public bool On { get; set; }
+    [Parameter] public EventCallback<bool> OnChange { get; set; }
+}

@@ -1,0 +1,82 @@
+@* 小窗场景（1600×900 画布）。天空不画：真透明（DEC-04）。
+   命中：岸=shore（单击选位），水=water（按住拖窗/摸鱼时单击选位），角色=character（按住拖窗）；
+   植物、荷叶、竿线等装饰不接指针，点到它们等于点到下面的岸/水或透明处（01 §4）。 *@
+<svg class="scene" viewBox="0 0 1600 900" xmlns="http://www.w3.org/2000/svg">
+    @* 岸后的灌木 *@
+    <g class="nohit">
+        <path d="M-20 560 C-10 470 60 450 110 480 C130 420 220 420 250 470 C290 440 360 460 370 530 L370 560 Z" fill="@P.Bush" class="line" stroke-linejoin="round" />
+        <path d="M1180 560 C1190 500 1250 480 1300 500 C1330 450 1420 450 1450 500 C1500 470 1590 480 1620 540 L1620 560 Z" fill="@P.Bush" class="line" stroke-linejoin="round" />
+    </g>
+
+    @* 岸：整条连续草岸 *@
+    <path data-hit="shore" d="M0 540 C200 528 420 548 640 538 S1100 530 1300 540 S1520 534 1600 540 V600 H0 Z" fill="@P.Shore" class="line" />
+
+    @* 水 *@
+    <rect data-hit="water" data-drag-target="pet" x="-10" y="592" width="1620" height="190" fill="@P.Water" class="line" />
+
+    <g class="nohit">
+        <path d="M560 760 h60 M840 740 h80 M1480 748 h70 M1000 612 h50 M300 640 h40" class="line" stroke-width="6" />
+        @switch (MapIndex)
+        {
+            case 0:
+                @* 荷塘：荷叶与两株荷花 *@
+                <path d="M1150 650 m-190 0 a190 52 0 1 0 380 0 a190 52 0 1 0 -380 0 M1150 650 L1110 626" fill="#b5d16f" class="line" />
+                <path d="M1120 640 l-30 -10 M1180 640 l30 -12 M1150 670 l0 18" class="line" stroke-width="5" />
+                <path d="M1470 640 m-80 0 a80 24 0 1 0 160 0 a80 24 0 1 0 -160 0" fill="#b5d16f" class="line" />
+                <path d="M140 600 C138 520 136 470 140 430" class="line" stroke="#7fa64a" stroke-width="14" />
+                <path d="M140 600 C138 520 136 470 140 430" stroke="#a9c96a" stroke-width="6" fill="none" />
+                <path d="M140 430 C100 430 80 390 96 360 C110 380 120 390 140 395 C130 360 140 330 160 316 C170 340 175 370 168 395 C190 388 200 376 212 360 C224 392 196 430 140 430 Z" fill="#f0a3a8" class="line" stroke-linejoin="round" />
+                <path d="M1470 600 C1468 540 1466 500 1470 470" class="line" stroke="#7fa64a" stroke-width="14" />
+                <path d="M1470 600 C1468 540 1466 500 1470 470" stroke="#a9c96a" stroke-width="6" fill="none" />
+                <path d="M1470 470 C1434 470 1416 436 1430 410 C1442 428 1452 436 1470 440 C1462 410 1470 384 1488 372 C1497 394 1500 420 1494 440 C1514 434 1522 424 1532 410 C1542 438 1518 470 1470 470 Z" fill="#f0a3a8" class="line" stroke-linejoin="round" />
+                break;
+            case 1:
+                @* 溪流：水里一堆灰石 *@
+                <path d="M980 720 C960 670 1020 640 1070 660 C1100 630 1170 640 1180 680 C1230 660 1320 680 1320 730 Z" fill="#a8a8ad" class="line" stroke-linejoin="round" />
+                <path d="M100 600 C90 560 150 540 190 560 C200 590 180 600 100 600 Z M1440 600 C1440 560 1500 550 1520 580 V600 Z" fill="#a8a8ad" class="line" />
+                break;
+            default:
+                @* 海湾：一段小码头 *@
+                <path d="M960 640 H1330 V680 H960 Z" fill="#e2b48f" class="line" />
+                <path d="M1000 680 V740 M1290 680 V740 M1060 640 V680 M1130 640 V680 M1200 640 V680 M1270 640 V680" class="line" stroke-width="8" />
+                <path d="M110 600 V510 M170 600 V520 M1460 600 V512 M1490 600 V520" class="line" stroke-width="12" />
+                break;
+        }
+    </g>
+
+    @if (Spot is { } spot)
+    {
+        <Bear Mode="Mode" Spot="spot" WaterColor="@P.Water" />
+    }
+
+    @if (Session.NoRoomAt is { } at)
+    {
+        @* 放不下：在点击处冒一下【文字占位，B0 Q5】 *@
+        <g class="noroom nohit" transform="translate(@F(at.X) @F(at.Y))">
+            <rect x="-130" y="-120" width="260" height="70" rx="35" fill="#fbf3e3" class="line" />
+            <text x="0" y="-72" text-anchor="middle" class="noroom-text">这里放不下</text>
+            <path d="M-20 -14 L20 14 M20 -14 L-20 14" class="line" stroke-width="7" />
+        </g>
+    }
+</svg>
+
+@code {
+    [Parameter, EditorRequired] public PetSession Session { get; set; } = null!;
+
+    private PetController Pet => Session.Pet;
+    private FishingMode Mode => Pet.State.Mode;
+    private ScenePoint? Spot => Pet.State.Spot;
+    private int MapIndex => Math.Max(0, Pet.Maps.All.ToList().FindIndex(m => m.Id == Pet.State.MapId));
+
+    /// <summary>三张占位地图只用配色区分：荷塘青绿水（DEC-05）、溪流青蓝、海湾浅蓝（03 §4 方向）。</summary>
+    private Palette P => MapIndex switch
+    {
+        0 => new Palette("#7dbba5", "#a9c96a", "#9cc463"),
+        1 => new Palette("#7fbfd0", "#b3c97a", "#8fbf6a"),
+        _ => new Palette("#9fd3e3", "#e8d7a8", "#a7c977"),
+    };
+
+    private sealed record Palette(string Water, string Shore, string Bush);
+
+    private static string F(double v) => v.ToString("0.###", System.Globalization.CultureInfo.InvariantCulture);
+}
