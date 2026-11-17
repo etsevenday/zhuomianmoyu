@@ -34,7 +34,7 @@
         {
             @if (Pet.State.Collapsed)
             {
-                @* 收起：缩成头像留在原处，单击恢复，可拖动（B0 Q1 按建议 A，待策划答复） *@
+                @* 收起：缩成圆头像留在原处，单击恢复，可拖动，拖完松开不恢复（B0 Q1 答复 A） *@
                 <div id="avatar" class="avatar" data-hit="avatar" data-drag-target="avatar" title="恢复"
                      style="left:@Px(Pet.AvatarPosition.X);top:@Px(Pet.AvatarPosition.Y);width:@Px(Pet.Layout.AvatarSize);height:@Px(Pet.Layout.AvatarSize)"
                      @onclick:stopPropagation="true">
@@ -58,7 +58,14 @@
             </div>
         }
 
-        <div class="placeholder-note">网页试玩版 · 界面文字与美术均为占位</div>
+        <div class="placeholder-note">
+            <div>@Texts.TrialNote</div>
+            <div>@Texts.FakeDesktopNote</div>
+            @if (_loaded && Pet.State.Closed)
+            {
+                <div class="closed-note" data-note="closed">@Texts.ClosedState</div>
+            }
+        </div>
 
         <div class="taskbar" @onclick:stopPropagation="true">
             <button class="start" title="开始"><span></span><span></span><span></span><span></span></button>
@@ -151,6 +158,18 @@
 
     [JSInvokable]
     public string DevProfileJson() => Session.DevProfileJson();
+
+    /// <summary>把手竿计时看到的"现在"再往后拨 ms 毫秒，返回累计拨了多少。</summary>
+    [JSInvokable]
+    public long DevSkew(long ms)
+    {
+        Session.DevSkewMs += ms;
+        return Session.DevSkewMs;
+    }
+
+    /// <summary>马上做一次手竿计时检查（不等每秒那次）。</summary>
+    [JSInvokable]
+    public void DevPoleTick() => Session.PoleCheck();
 
     private async Task ToggleSaveFailure() => await JS.InvokeAsync<object>("moyuDev.failSaves", !_failSaves);
 

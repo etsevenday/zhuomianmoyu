@@ -170,6 +170,9 @@ window.moyuPlay = (() => {
         addCoins: n => ref.invokeMethodAsync('DevAddCoins', n),
         failSaves: on => { failSaves = !!on; return ref.invokeMethodAsync('DevSaveFailureChanged', failSaves); },
         profile: () => ref.invokeMethodAsync('DevProfileJson').then(j => JSON.parse(j)),
+        // 手竿计时：把页面看到的"现在"往后拨，再立刻检查一次
+        skew: ms => ref.invokeMethodAsync('DevSkew', ms),
+        poleTick: () => ref.invokeMethodAsync('DevPoleTick'),
       };
     },
     get failingSaves() { return failSaves; },

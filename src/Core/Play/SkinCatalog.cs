@@ -27,7 +27,7 @@ namespace Moyu.Core.Play
         }
     }
 
-    /// <summary>首批 12 件可抽外观 + 4 件默认（WEB-DEC-08）。名称与描述【交文案策划定】。纯外观，不影响任何玩法数值。</summary>
+    /// <summary>首批 12 件可抽外观 + 4 件默认（WEB-DEC-08）。名称与描述按文案定稿 §9 放在网页 Texts。纯外观，不影响任何玩法数值。</summary>
     public sealed class SkinCatalog
     {
         public const int DrawCost = 100;

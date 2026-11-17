@@ -59,6 +59,7 @@ public sealed class ProfileStore
         {
             return new LoadResult(LoadStatus.Error, null, "存档内容损坏");
         }
+        PlayEngine.Upgrade(p); // B1 的档升到当前版本；升级后的档下次保存时写回
         var problem = PlayEngine.Validate(p, fish, skins);
         if (problem != null) return new LoadResult(LoadStatus.Error, null, problem);
         p!.Revision = r.Revision;

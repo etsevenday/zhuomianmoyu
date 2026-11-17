@@ -25,12 +25,19 @@
             </button>
             @* 常驻数字：总累计、本轮进度、金币、保存状态（02 §1、WU-01）。悬停看完整整数。 *@
             <div class="stats" aria-live="polite">
-                <span class="stat" data-stat="total" title="总累计 @(Play?.Profile.LifetimeInputs ?? 0)"><i>总</i>@Short(Play?.Profile.LifetimeInputs ?? 0)</span>
+                <span class="stat" data-stat="total" title="@Texts.TotalTitle(Play?.Profile.LifetimeInputs ?? 0)"><i>总</i>@Short(Play?.Profile.LifetimeInputs ?? 0)</span>
                 <span class="stat cycle" data-stat="cycle" title="@CycleTitle"><i>本轮</i>@CycleText</span>
-                <span class="stat" data-stat="coins" title="金币 @(Play?.Profile.Coins ?? 0)"><span class="coin"></span>@Short(Play?.Profile.Coins ?? 0)</span>
-                <span class="stat save @Session.State.ToString().ToLowerInvariant()" data-stat="save" title="@(Session.LoadError ?? SaveText)">@SaveText</span>
+                <span class="stat" data-stat="coins" title="@Texts.CoinsTitle(Play?.Profile.Coins ?? 0)"><i>金币</i><span class="coin"></span>@Short(Play?.Profile.Coins ?? 0)</span>
+                <span class="stat save @Session.State.ToString().ToLowerInvariant()" data-stat="save" data-reason="@Session.LoadError" title="@SaveTitle">@SaveText</span>
             </div>
-            <button class="pill tab @On(Panel.Basket)" title="鱼篓" @onclick="() => Toggle(Panel.Basket)"><Icon Name="basket" /></button>
+            <button class="pill tab @On(Panel.Basket)" title="鱼篓" @onclick="() => Toggle(Panel.Basket)">
+                <Icon Name="basket" />
+                @* 新鱼数量：和头顶卡片来自同一次已保存的捕获，打开鱼篓看过才清（02 §2.1） *@
+                @if (Session.NewFishCount > 0)
+                {
+                    <span class="badge" data-stat="new-fish" title="@Texts.NewFishTitle(Session.NewFishCount)">@Session.NewFishCount</span>
+                }
+            </button>
             <button class="pill tab @On(Panel.Collection)" title="收藏" @onclick="() => Toggle(Panel.Collection)"><Icon Name="star" /></button>
             <button class="pill tab @On(Panel.Records)" title="记录" @onclick="() => Toggle(Panel.Records)"><Icon Name="list" /></button>
             <button class="pill tab @(MoreOn ? "on" : "")" title="更多" @onclick="() => Toggle(Panel.More)"><Icon Name="gear" /></button>
@@ -45,7 +52,7 @@
     private PetController Pet => Session.Pet;
     private PlayEngine? Play => Session.Play;
 
-    // 底栏文字【文案占位，B1 Q13】
+    // 底栏文字按文案定稿 TXT-STAT（Texts）
     private string CycleText
     {
         get
@@ -53,15 +60,39 @@
             if (Play == null) return "—";
             var mode = Pet.State.Mode;
             var next = Play.NextNode(mode, Pet.State.MapId);
-            if (next == null) return "计时未开放"; // 手竿计时另行收敛（B1 Q8 假设 A）
+            if (next == null) return Texts.PoleShort(Play.PoleElapsed(Pet.State.MapId)); // 手竿：本图真实已过时间/30:00
             var count = Play.CycleCount(mode, Pet.State.MapId);
             return $"{count}/{next}" + (next == CaptureRules.For(mode)!.GuaranteedNode ? " 保底" : "");
         }
     }
 
-    private string CycleTitle => Play?.NextNode(Pet.State.Mode, Pet.State.MapId) is { } next
-        ? $"本轮 {Play.CycleCount(Pet.State.Mode, Pet.State.MapId)} 次，下一次判定在第 {next} 次"
-        : "手竿只记次数，计时未开放";
+    private string CycleTitle
+    {
+        get
+        {
+            if (Play == null) return "";
+            var map = Pet.State.MapId;
+            if (Play.NextNode(Pet.State.Mode, map) is { } next) return Texts.CycleTitle(Play.CycleCount(Pet.State.Mode, map), next);
+            long ms = Play.PoleElapsed(map);
+            var lines = new List<string>
+            {
+                Session.PoleTimingMap == map ? Texts.PoleRunning(ms) : Texts.PolePaused(ms),
+                Texts.PoleRules,
+                Texts.PoleGapRule,
+            };
+            if (Session.PoleGapExcluded) lines.Add(Texts.PoleGapHappened);
+            return string.Join("\n", lines);
+        }
+    }
+
+    private string SaveTitle => Session.State switch
+    {
+        SaveState.Loading => Texts.NotReady,
+        SaveState.Unsaved => Texts.SaveRetry,
+        SaveState.ReadOnly => Texts.ReadOnlyPage,
+        SaveState.LoadError => Session.LoadError == "存档版本不认识" ? Texts.UnknownVersion : Texts.LoadFailed,
+        _ => SaveText,
+    };
 
     private string SaveText => Session.State switch
     {
@@ -76,13 +107,7 @@
     /// <summary>底栏放不下长数字：一万以上缩成"万"，完整数在悬停提示里。</summary>
     private static string Short(long n) => n < 10000 ? n.ToString() : (n / 1000 / 10.0).ToString("0.#") + "万";
 
-    // 模式名与按钮文字【交文案策划定】，B0 Q5 定稿前用效果图上的字
-    public static string ModeName(FishingMode m) => m switch
-    {
-        FishingMode.Lure => "路亚",
-        FishingMode.Wade => "摸鱼",
-        _ => "手竿",
-    };
+    public static string ModeName(FishingMode m) => Texts.ModeName(m);
 
     public static string ModeIcon(FishingMode m) => m switch
     {

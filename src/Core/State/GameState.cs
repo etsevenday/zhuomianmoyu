@@ -27,6 +27,10 @@ namespace Moyu.Core.State
         public bool Passthrough { get; set; } = true;
         /// <summary>静音：默认开（01 §6 默认建议静音）。</summary>
         public bool Mute { get; set; } = true;
+        /// <summary>置顶：网页版只是演示开关，不改系统窗口层级（B0 Q2 答复 C）。初值是开发方默认。</summary>
+        public bool Topmost { get; set; } = true;
+        /// <summary>后台输入：网页版只是演示开关，不接收页面外输入、也不改计数资格（B0 Q2 答复 C）。默认关（窗口验收 05：不能默认允许采集全局输入）。</summary>
+        public bool BackgroundInput { get; set; }
     }
 
     public sealed class GameState

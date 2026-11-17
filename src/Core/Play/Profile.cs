@@ -31,6 +31,8 @@ namespace Moyu.Core.Play
         public long Count { get; set; }
         /// <summary>这一组已经完成的周期数；它是本轮随机结果的键的一部分，成功后加 1。</summary>
         public long Cycle { get; set; }
+        /// <summary>手竿组本轮已累计的有效毫秒（0—1799999）；主动模式的组一直是 0。</summary>
+        public long ElapsedMs { get; set; }
     }
 
     // 存档类里字符串属性的默认 "" 只防 null：引擎造鱼、建档时每个都会赋值，读档时 Validate 查认得的字段，
@@ -49,7 +51,7 @@ namespace Moyu.Core.Play
         public string CatchEventId { get; set; } = "";
         public string ContentVersion { get; set; } = "";
         public CatchSource Source { get; set; }
-        /// <summary>是周期末保底节点出的（新鱼获卡片上加个标记，B1 Q10 假设 A）。</summary>
+        /// <summary>是主动模式周期末保底节点出的（新鱼获卡片上加个标记，02 §2.1）；手竿出的不算。</summary>
         public bool Guaranteed { get; set; }
         public FishPlace Place { get; set; }
         /// <summary>在鱼缸里时是哪个缸。</summary>
@@ -107,7 +109,8 @@ namespace Moyu.Core.Play
     /// </summary>
     public sealed class Profile
     {
-        public const int CurrentSchema = 1;
+        /// <summary>2：加了手竿有效时间和新鱼表（B2）。1 是 B1 的档，读进来时升级。</summary>
+        public const int CurrentSchema = 2;
 
         public int Schema { get; set; } = CurrentSchema;
         public string RulesVersion { get; set; } = "";
@@ -126,11 +129,16 @@ namespace Moyu.Core.Play
 
         public long NextFishSeq { get; set; } = 1;
         public List<FishRecord> Fish { get; set; } = new List<FishRecord>();
+        /// <summary>
+        /// 新鱼：正常捕获、还没在鱼篓里显示过的鱼编号（02 §2.1）。开发注入的不进；离开鱼篓就去掉。
+        /// 底栏鱼篓上的数字就是它，随档保存，刷新不重复加。
+        /// </summary>
+        public List<string> NewFishIds { get; set; } = new List<string>();
         public Dictionary<string, SpeciesRecord> Records { get; set; } = new Dictionary<string, SpeciesRecord>();
 
         public int Coins { get; set; }
         public List<Tank> Tanks { get; set; } = new List<Tank>();
-        /// <summary>设为观赏背景的鱼缸；null 表示不显示（B1 Q11 假设 A：新档默认不设）。</summary>
+        /// <summary>设为观赏背景的鱼缸；null 表示不显示（03 §3：新档默认不设）。</summary>
         public string? BackgroundTankId { get; set; }
 
         public List<string> OwnedSkins { get; set; } = new List<string>();

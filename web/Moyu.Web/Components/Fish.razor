@@ -1,50 +1,49 @@
-@* 六种临时鱼的占位图（开发方按 05 §2 视觉语义画的 G 粗笔 SVG，B1 Q12 假设 A，等正式美术替换）。
-   按"单位长度 100、鼻尖朝左"画，再按 Length 缩放：同一画面里的鱼共用尺度（03 §4）。
-   Silhouette：记录页里没抓到的鱼只画灰色轮廓。 *@
+@* 六种临时鱼的占位图（开发方按 05 §2 视觉语义画的 G 粗笔 SVG，B1 Q12 答复 A，等正式美术替换）。
+   按"单位长度 100、鼻尖朝左"画，再按 Length 缩放：同一画面里的鱼共用尺度（03 §4）。 *@
 <g class="fish" data-species="@Species" transform="translate(@F(X) @F(Y)) scale(@F(Length / 100))">
     @switch (Species)
     {
         case "TMP_F001":
             @* 银白细身、短圆尾 *@
-            <circle cx="40" cy="0" r="9" fill="@C("#e9ecf3")" stroke="#1f1d1a" stroke-width="3.5" />
-            <ellipse cx="-6" cy="0" rx="42" ry="9" fill="@C("#f4f6fa")" stroke="#1f1d1a" stroke-width="3.5" />
-            <path d="M-40 -3 C-20 -8 16 -8 30 -3" stroke="@C("#c9a6e6")" stroke-width="4" fill="none" />
+            <circle cx="40" cy="0" r="9" fill="#e9ecf3" stroke="#1f1d1a" stroke-width="3.5" />
+            <ellipse cx="-6" cy="0" rx="42" ry="9" fill="#f4f6fa" stroke="#1f1d1a" stroke-width="3.5" />
+            <path d="M-40 -3 C-20 -8 16 -8 30 -3" stroke="#c9a6e6" stroke-width="4" fill="none" />
             <circle cx="-36" cy="-2" r="2.5" fill="#1f1d1a" />
             break;
         case "TMP_F002":
             @* 青绿圆身、单个大圆点 *@
-            <path d="M24 0 L46 -16 L44 16 Z" fill="@C("#7cc2b0")" stroke="#1f1d1a" stroke-width="3.5" stroke-linejoin="round" />
-            <ellipse cx="-4" cy="0" rx="32" ry="24" fill="@C("#8fd0bf")" stroke="#1f1d1a" stroke-width="3.5" />
-            <circle cx="2" cy="2" r="11" fill="@C("#3f8f7d")" />
+            <path d="M24 0 L46 -16 L44 16 Z" fill="#7cc2b0" stroke="#1f1d1a" stroke-width="3.5" stroke-linejoin="round" />
+            <ellipse cx="-4" cy="0" rx="32" ry="24" fill="#8fd0bf" stroke="#1f1d1a" stroke-width="3.5" />
+            <circle cx="2" cy="2" r="11" fill="#3f8f7d" />
             <circle cx="-26" cy="-6" r="3" fill="#1f1d1a" />
             break;
         case "TMP_F003":
             @* 淡金长身、宽扇尾 *@
-            <path d="M26 0 L50 -26 Q56 0 50 26 Z" fill="@C("#f4e3a3")" stroke="#1f1d1a" stroke-width="3.5" stroke-linejoin="round" />
-            <path d="M30 0 L48 -16 M30 0 L50 0 M30 0 L48 16" stroke="@C("#d9b85a")" stroke-width="2.5" />
-            <ellipse cx="-10" cy="0" rx="38" ry="11" fill="@C("#f0d98a")" stroke="#1f1d1a" stroke-width="3.5" />
+            <path d="M26 0 L50 -26 Q56 0 50 26 Z" fill="#f4e3a3" stroke="#1f1d1a" stroke-width="3.5" stroke-linejoin="round" />
+            <path d="M30 0 L48 -16 M30 0 L50 0 M30 0 L48 16" stroke="#d9b85a" stroke-width="2.5" />
+            <ellipse cx="-10" cy="0" rx="38" ry="11" fill="#f0d98a" stroke="#1f1d1a" stroke-width="3.5" />
             <circle cx="-40" cy="-2" r="2.5" fill="#1f1d1a" />
             break;
         case "TMP_F101":
             @* 叶形宽尾、柔粉鳍尖 *@
-            <path d="M20 0 C34 -28 54 -26 50 -2 C54 22 34 28 20 0 Z" fill="@C("#b5d16f")" stroke="#1f1d1a" stroke-width="3.5" />
-            <path d="M22 0 L48 -2 M30 -10 L38 -4 M30 10 L38 4" stroke="@C("#7fa64a")" stroke-width="2.5" />
-            <ellipse cx="-12" cy="0" rx="34" ry="15" fill="@C("#f3f0e2")" stroke="#1f1d1a" stroke-width="3.5" />
-            <path d="M-12 -14 L-2 -26 L6 -13 Z M-10 14 L-2 24 L4 13 Z" fill="@C("#f0a3a8")" stroke="#1f1d1a" stroke-width="2.5" stroke-linejoin="round" />
+            <path d="M20 0 C34 -28 54 -26 50 -2 C54 22 34 28 20 0 Z" fill="#b5d16f" stroke="#1f1d1a" stroke-width="3.5" />
+            <path d="M22 0 L48 -2 M30 -10 L38 -4 M30 10 L38 4" stroke="#7fa64a" stroke-width="2.5" />
+            <ellipse cx="-12" cy="0" rx="34" ry="15" fill="#f3f0e2" stroke="#1f1d1a" stroke-width="3.5" />
+            <path d="M-12 -14 L-2 -26 L6 -13 Z M-10 14 L-2 24 L4 13 Z" fill="#f0a3a8" stroke="#1f1d1a" stroke-width="2.5" stroke-linejoin="round" />
             <circle cx="-36" cy="-3" r="2.5" fill="#1f1d1a" />
             break;
         case "TMP_F201":
             @* 修长轮廓、青蓝断纹 *@
-            <path d="M38 0 L50 -10 L48 0 L50 10 Z" fill="@C("#5aa9c9")" stroke="#1f1d1a" stroke-width="3" stroke-linejoin="round" />
-            <ellipse cx="-6" cy="0" rx="46" ry="7.5" fill="@C("#dff1f6")" stroke="#1f1d1a" stroke-width="3" />
-            <path d="M-34 0 h8 M-20 0 h10 M-4 0 h8 M10 0 h10 M26 0 h8" stroke="@C("#3d86a8")" stroke-width="4" stroke-linecap="round" />
+            <path d="M38 0 L50 -10 L48 0 L50 10 Z" fill="#5aa9c9" stroke="#1f1d1a" stroke-width="3" stroke-linejoin="round" />
+            <ellipse cx="-6" cy="0" rx="46" ry="7.5" fill="#dff1f6" stroke="#1f1d1a" stroke-width="3" />
+            <path d="M-34 0 h8 M-20 0 h10 M-4 0 h8 M10 0 h10 M26 0 h8" stroke="#3d86a8" stroke-width="4" stroke-linecap="round" />
             <circle cx="-44" cy="-2" r="2" fill="#1f1d1a" />
             break;
         default:
             @* TMP_F301 厚身大尾、奶黄云纹 *@
-            <path d="M22 0 C36 -36 58 -40 52 -4 C58 34 36 36 22 0 Z" fill="@C("#f2dd97")" stroke="#1f1d1a" stroke-width="3.5" />
-            <ellipse cx="-12" cy="0" rx="34" ry="22" fill="@C("#f6e7b0")" stroke="#1f1d1a" stroke-width="3.5" />
-            <path d="M-22 -4 q4 -6 8 0 q4 -6 8 0 M-6 10 q4 -6 8 0 q4 -6 8 0" stroke="@C("#d7b860")" stroke-width="2.5" fill="none" />
+            <path d="M22 0 C36 -36 58 -40 52 -4 C58 34 36 36 22 0 Z" fill="#f2dd97" stroke="#1f1d1a" stroke-width="3.5" />
+            <ellipse cx="-12" cy="0" rx="34" ry="22" fill="#f6e7b0" stroke="#1f1d1a" stroke-width="3.5" />
+            <path d="M-22 -4 q4 -6 8 0 q4 -6 8 0 M-6 10 q4 -6 8 0 q4 -6 8 0" stroke="#d7b860" stroke-width="2.5" fill="none" />
             <circle cx="-36" cy="-5" r="3" fill="#1f1d1a" />
             break;
     }
@@ -57,9 +56,5 @@
     [Parameter] public double Y { get; set; }
     /// <summary>画出来的全长（父画布单位）。</summary>
     [Parameter] public double Length { get; set; } = 100;
-    [Parameter] public bool Silhouette { get; set; }
-
-    private string C(string color) => Silhouette ? "#c9bfae" : color;
-
     private static string F(double v) => v.ToString("0.###", System.Globalization.CultureInfo.InvariantCulture);
 }

@@ -20,7 +20,7 @@ public enum SaveState
     LoadError,
 }
 
-/// <summary>新鱼获卡片（B1 Q10 假设 A）：保存成功后才出现，约 4 秒消失，几秒内连续出鱼合成一张。</summary>
+/// <summary>新鱼获卡片（02 §2.1）：保存成功后才出现，4 秒消失；卡片还在时又出鱼就合成一张、从最后一批重新计 4 秒。</summary>
 public sealed class CatchCard
 {
     public List<FishRecord> Fish { get; } = new();
@@ -29,13 +29,17 @@ public sealed class CatchCard
 
 /// <summary>
 /// 网页里的一局：窗口控制器、玩法引擎与存档、面板上的临时选择、提示。
-/// 输入直接改当前档案并稍后存；收藏、出售、抽取、装备在档案副本上做、存成功才换上（06 §3 一笔事务）。
+/// 输入和手竿计时直接改当前档案并稍后存；收藏、出售、抽取、装备在档案副本上做、存成功才换上（06 §3 一笔事务）。
 /// </summary>
 public sealed class PetSession
 {
     public const int CardMs = 4000;
     private const int SaveDebounceMs = 800;
     private const int RetryMs = 2000;
+    /// <summary>手竿多久检查一次时间。只影响显示有多及时，计入多少按真实经过时间算（05 §1.1）。</summary>
+    private const int PoleCheckMs = 1000;
+    /// <summary>手竿只涨时间时多久存一次；出鱼马上存。刷新只恢复最后存进去的时间。</summary>
+    private const int PoleSaveMs = 5000;
 
     private readonly PrefsStore _prefs;
     private readonly ProfileStore _store;
@@ -65,6 +69,17 @@ public sealed class PetSession
     public bool CanPlay => Play != null && Writer && State != SaveState.LoadError && Play.Profile.Revision > 0;
 
     public CatchCard? Card { get; private set; }
+
+    /// <summary>底栏鱼篓上的新鱼数：已存进去、还在鱼篓、没在鱼篓里显示过的正常捕获（02 §2.1）。</summary>
+    public int NewFishCount => Play == null ? 0
+        : Play.Profile.NewFishIds.Count(id => _unconfirmed.All(f => f.Id != id) && Play.FindFish(id)?.Place == FishPlace.Basket);
+
+    /// <summary>上一段手竿检查间隔超过 5 分钟没计入（状态详情 TXT-STAT-012）；出鱼或换组后不再提。</summary>
+    public bool PoleGapExcluded { get; private set; }
+    /// <summary>此刻在计时的手竿地图；没在计时为 null。</summary>
+    public string? PoleTimingMap => _poleClock.MapId;
+    /// <summary>开发入口：把手竿计时看到的"现在"往后拨（验收脚本验 30 分钟和 5 分钟边界用），走同一条计时路径。</summary>
+    public long DevSkewMs { get; set; }
     /// <summary>短提示（到账回执、失败原因）。</summary>
     public string? Notice { get; private set; }
     public bool NoticeIsError { get; private set; }
@@ -93,8 +108,12 @@ public sealed class PetSession
     private string? _saleOp;
     private List<string>? _saleIds;
     private string? _drawOp;
+    private readonly PoleClock _poleClock = new();
+    private bool _poleLoop;
+    private long _saveDueMs;
 
     private static long Now => DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+    private long PoleNow => Now + DevSkewMs;
     private void Notify() => Changed?.Invoke();
 
     // ---- 载入 ----
@@ -105,16 +124,19 @@ public sealed class PetSession
         Pet = PetController.FromPrefs(new DesktopLayout(), MapCatalog.CreatePlaceholder(), prefs);
         Writer = await _js.InvokeAsync<bool>("moyuPlay.acquireWriter");
         await LoadProfileAsync();
+        StartPoleLoop();
     }
 
     public async Task ReloadPrefsAsync()
     {
         Pet = PetController.FromPrefs(new DesktopLayout(), MapCatalog.CreatePlaceholder(), await _prefs.LoadAsync());
+        PoleCheck();
         Notify();
     }
 
     private async Task LoadProfileAsync()
     {
+        _poleClock.Reset(); // 换了档案：从读好的那一刻重新起算，不补算之前那段（05 §1.1）
         State = SaveState.Loading;
         Notify();
         var r = await _store.LoadAsync(FishCatalog, Skins);
@@ -140,6 +162,7 @@ public sealed class PetSession
                 State = SaveState.LoadError;
                 break;
         }
+        PoleCheck(); // 读好就起算，不等下一次每秒检查
         Notify();
     }
 
@@ -152,8 +175,57 @@ public sealed class PetSession
 
     public async Task CommitPrefsAsync()
     {
+        PoleCheck(); // 切模式、切地图、收起、关闭之后：先把时间结给之前那组，再按现在的状态起算
         Notify();
         await _prefs.SaveAsync(Pet.ToPrefs());
+    }
+
+    // ---- 手竿计时（05 §1.1） ----
+
+    /// <summary>此刻有计时资格的手竿地图：当前玩法是手竿、小窗没关（收起照算）、能写档。</summary>
+    private string? PoleMap => CanPlay && !Pet.State.Closed && Pet.State.Mode == FishingMode.Pole ? Pet.State.MapId : null;
+
+    private void StartPoleLoop()
+    {
+        if (_poleLoop) return;
+        _poleLoop = true;
+        _ = PoleLoopAsync();
+    }
+
+    private async Task PoleLoopAsync()
+    {
+        while (true)
+        {
+            await Task.Delay(PoleCheckMs);
+            PoleCheck();
+        }
+    }
+
+    /// <summary>做一次计时检查。管理事务进行中先不结（档案会被换成副本），锚点不动，下一次检查一起结。</summary>
+    public void PoleCheck()
+    {
+        if (Play == null || _inTransaction) return;
+        var before = _poleClock.MapId;
+        var r = _poleClock.Check(Play, PoleMap, PoleNow);
+        if (_poleClock.MapId != before) PoleGapExcluded = false;
+        if (r == null)
+        {
+            if (before != _poleClock.MapId) Notify();
+            return;
+        }
+        if (r.GapExcluded) PoleGapExcluded = true;
+        else _dirty = true;
+        if (r.Catch != null)
+        {
+            PoleGapExcluded = false;
+            _unconfirmed.Add(r.Catch);
+            _ = SaveNowAsync();
+        }
+        else if (!r.GapExcluded)
+        {
+            ScheduleSave(PoleSaveMs);
+        }
+        Notify();
     }
 
     // ---- 输入 ----
@@ -194,13 +266,17 @@ public sealed class PetSession
 
     // ---- 保存 ----
 
+    /// <summary>过 delayMs 存一次；已经排着一次更早的就不再排，排着的更晚就改成这次的时间。</summary>
     private void ScheduleSave(int delayMs)
     {
-        if (_saveTimer != null) return;
-        _saveTimer = new CancellationTokenSource();
-        _ = Later(delayMs, _saveTimer.Token, async () =>
+        long due = Now + delayMs;
+        if (_saveTimer != null && _saveDueMs <= due) return;
+        _saveTimer?.Cancel();
+        _saveDueMs = due;
+        var timer = _saveTimer = new CancellationTokenSource();
+        _ = Later(delayMs, timer.Token, async () =>
         {
-            _saveTimer = null;
+            if (_saveTimer == timer) _saveTimer = null;
             await SaveNowAsync();
         });
     }
@@ -296,6 +372,7 @@ public sealed class PetSession
             var queued = _queued.ToList();
             _queued.Clear();
             foreach (var item in queued) Apply(item);
+            PoleCheck();
             Notify();
         }
     }
@@ -316,10 +393,11 @@ public sealed class PetSession
         });
     }
 
+    /// <summary>点卡片：打开鱼篓，选中卡片里最新的、还在鱼篓的那条；都不在鱼篓了就只打开（02 §2.1）。</summary>
     public void OpenCard()
     {
         if (Card == null) return;
-        FocusFishId = Card.Latest.Id;
+        FocusFishId = Card.Fish.Select(f => f.Id).Reverse().FirstOrDefault(id => Play?.FindFish(id)?.Place == FishPlace.Basket);
         Card = null;
         _cardTimer?.Cancel();
         Pet.State.Panel = Moyu.Core.State.Panel.Basket;
@@ -341,7 +419,18 @@ public sealed class PetSession
         Notify();
     }
 
-    private const string SaveFailedText = "保存失败，什么都没变，可以再试一次"; // 【文案占位，B1 Q13】
+    /// <summary>
+    /// 鱼篓列表已经显示了这些鱼：其中的新鱼算看过（02 §2.1）。只认这一次真的画出来的，之后新到的不清。
+    /// </summary>
+    public void MarkSeen(IReadOnlyCollection<string> shownIds)
+    {
+        if (!CanPlay || _inTransaction || shownIds.Count == 0) return;
+        var confirmed = shownIds.Where(id => _unconfirmed.All(f => f.Id != id)).ToList();
+        if (!Play!.MarkSeen(confirmed)) return;
+        _dirty = true;
+        ScheduleSave(SaveDebounceMs);
+        Notify();
+    }
 
     // ---- 鱼篓与收藏 ----
 
@@ -349,8 +438,8 @@ public sealed class PetSession
     {
         if (!CanPlay) return;
         var (r, saved) = await TransactAsync(e => e.Collect(fishId, PlayEngine.FirstTankId), r => r == MoveResult.Ok);
-        if (r == MoveResult.TankFull) Say("鱼缸满了（20/20），鱼还在鱼篓里", true);
-        else if (r == MoveResult.Ok && !saved) Say(SaveFailedText, true);
+        if (r == MoveResult.TankFull) Say(Texts.TankFull, true);
+        else if (r == MoveResult.Ok && !saved) Say(Texts.SaveFailed, true);
         else if (r == MoveResult.Ok)
         {
             Checked.Remove(fishId);
@@ -362,7 +451,7 @@ public sealed class PetSession
     {
         if (!CanPlay) return;
         var (r, saved) = await TransactAsync(e => e.Retrieve(fishId), r => r == MoveResult.Ok);
-        if (r == MoveResult.Ok && !saved) Say(SaveFailedText, true);
+        if (r == MoveResult.Ok && !saved) Say(Texts.SaveFailed, true);
         else if (r == MoveResult.Ok && TankFishId == fishId) TankFishId = null;
     }
 
@@ -370,7 +459,7 @@ public sealed class PetSession
     {
         if (!CanPlay) return;
         var (r, saved) = await TransactAsync(e => e.SetBackground(tankId), r => r);
-        if (r && !saved) Say(SaveFailedText, true);
+        if (r && !saved) Say(Texts.SaveFailed, true);
     }
 
     // ---- 出售 ----
@@ -410,16 +499,16 @@ public sealed class PetSession
             PendingSale = null;
             _saleIds = null;
             _saleOp = null;
-            Say($"卖出 {r.Receipt!.Lines.Count} 条 +{r.Receipt.Delta}，余额 {r.Receipt.BalanceAfter}"); // 【文案占位，B1 Q13】
+            Say(Texts.SaleReceipt(r.Receipt!.Lines.Count, r.Receipt.Delta, r.Receipt.BalanceAfter));
         }
         else if (r.Status == TradeStatus.Ok)
         {
-            Say(SaveFailedText, true); // 保留同一个操作号，重试只会到账一次
+            Say(Texts.SaveFailed, true); // 保留同一个操作号，重试只会到账一次
         }
         else
         {
             CancelSale();
-            Say("鱼有变化，请重新选择后再卖", true); // 【文案占位，B1 Q13】
+            Say(Texts.SaleStale, true);
         }
     }
 
@@ -438,11 +527,11 @@ public sealed class PetSession
             SkinSelected = r.Receipt!.SkinId;
             SkinTab = Skins.Find(SkinSelected)!.Category;
         }
-        else if (r.Status == TradeStatus.Ok) Say(SaveFailedText, true);
+        else if (r.Status == TradeStatus.Ok) Say(Texts.SaveFailed, true);
         else
         {
             _drawOp = null;
-            if (r.Status == TradeStatus.NotEnoughCoins) Say($"金币不够，还差 {SkinCatalog.DrawCost - Play!.Profile.Coins}", true); // 【文案占位，B1 Q13】
+            if (r.Status == TradeStatus.NotEnoughCoins) Say(Texts.NotEnough(SkinCatalog.DrawCost - Play!.Profile.Coins), true);
         }
     }
 
@@ -450,7 +539,7 @@ public sealed class PetSession
     {
         if (!CanPlay) return;
         var (r, saved) = await TransactAsync(e => e.Equip(skinId), r => r);
-        if (r && !saved) Say(SaveFailedText, true);
+        if (r && !saved) Say(Texts.SaveFailed, true);
     }
 
     // ---- 开发入口（?dev=1） ----

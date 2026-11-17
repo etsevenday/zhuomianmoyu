@@ -18,6 +18,14 @@ namespace Moyu.Core.Play
         public FishRecord? Catch { get; set; }
     }
 
+    /// <summary>一次手竿计时检查的结果（05 §1.1）。</summary>
+    public sealed class PoleResult
+    {
+        /// <summary>这段检查间隔超过 5 分钟，整段没计。</summary>
+        public bool GapExcluded { get; set; }
+        public FishRecord? Catch { get; set; }
+    }
+
     public enum MoveResult
     {
         Ok,
@@ -149,6 +157,38 @@ namespace Moyu.Core.Play
             return result;
         }
 
+        // ---- 手竿计时 ----
+
+        /// <summary>这张地图手竿本轮已累计的有效毫秒。</summary>
+        public long PoleElapsed(string mapId) =>
+            Profile.Groups.TryGetValue(GroupKey(FishingMode.Pole, mapId), out var g) ? g.ElapsedMs : 0;
+
+        /// <summary>
+        /// 把相邻两次计时检查之间的 gapMs 记到这张地图的手竿组（05 §1.1）：0—5 分钟（含）整段计入，
+        /// 超过 5 分钟整段不计（不按 5 分钟封顶），负数（时钟倒退）不计。满 30 分钟出本图鱼池 1 条正常鱼，
+        /// 扣掉 30 分钟、余数带进下一轮。不改输入次数，键鼠也不能加速。
+        /// </summary>
+        public PoleResult AddPoleTime(string mapId, long gapMs, long nowMs)
+        {
+            var result = new PoleResult();
+            if (gapMs > CaptureRules.PoleMaxCheckGapMs)
+            {
+                result.GapExcluded = true;
+                return result;
+            }
+            if (gapMs <= 0) return result;
+            var key = GroupKey(FishingMode.Pole, mapId);
+            if (!Profile.Groups.TryGetValue(key, out var g)) Profile.Groups[key] = g = new ProgressGroup();
+            g.ElapsedMs += gapMs;
+            if (g.ElapsedMs >= CaptureRules.PoleIntervalMs)
+            {
+                result.Catch = MakeFish($"catch|{key}|{g.Cycle}", ModeKey(FishingMode.Pole), mapId, nowMs, CatchSource.Normal);
+                g.ElapsedMs -= CaptureRules.PoleIntervalMs;
+                g.Cycle++;
+            }
+            return result;
+        }
+
         /// <summary>开发入口：按本图鱼池造一条鱼，来源记为开发（05 §3），不推进任何计数。</summary>
         public FishRecord DevInjectFish(string mapId, long nowMs) =>
             MakeFish($"dev|{Profile.NextFishSeq}", "dev", mapId, nowMs, CatchSource.Dev);
@@ -173,6 +213,7 @@ namespace Moyu.Core.Play
                 Place = FishPlace.Basket,
             };
             Profile.Fish.Add(fish);
+            if (source == CatchSource.Normal) Profile.NewFishIds.Add(fish.Id);
 
             if (!Profile.Records.TryGetValue(species.Id, out var rec))
                 Profile.Records[species.Id] = rec = new SpeciesRecord { FirstAtMs = nowMs };
@@ -191,6 +232,13 @@ namespace Moyu.Core.Play
         public IEnumerable<FishRecord> InBasket => Profile.Fish.Where(f => f.Place == FishPlace.Basket);
         public IEnumerable<FishRecord> InTank(string tankId) => Profile.Fish.Where(f => f.Place == FishPlace.Tank && f.TankId == tankId);
 
+        /// <summary>这些鱼已经在鱼篓里显示过了，不再算新鱼。只去掉给的这几条，之后新到的不受影响（02 §2.1）。</summary>
+        public bool MarkSeen(IEnumerable<string> fishIds)
+        {
+            var seen = new HashSet<string>(fishIds);
+            return Profile.NewFishIds.RemoveAll(seen.Contains) > 0;
+        }
+
         /// <summary>鱼篓里的鱼放进鱼缸；满了放不进，鱼留在鱼篓（WA-02），不先删来源。</summary>
         public MoveResult Collect(string fishId, string tankId)
         {
@@ -202,6 +250,7 @@ namespace Moyu.Core.Play
             if (InTank(tankId).Count() >= tank.Capacity) return MoveResult.TankFull;
             fish.Place = FishPlace.Tank;
             fish.TankId = tankId;
+            Profile.NewFishIds.Remove(fishId);
             return MoveResult.Ok;
         }
 
@@ -270,6 +319,7 @@ namespace Moyu.Core.Play
                 var fish = FindFish(line.FishId)!;
                 fish.Place = FishPlace.Sold;
                 fish.TankId = null;
+                Profile.NewFishIds.Remove(fish.Id);
             }
             Profile.Coins += quote.Total;
             var receipt = AddLedger(opId, LedgerKind.Sale, quote.Total, nowMs);
@@ -357,6 +407,17 @@ namespace Moyu.Core.Play
         // ---- 读档检查 ----
 
         /// <summary>
+        /// 旧版档案升到当前版本，读档检查之前做（08 §4）。B1 的档（版本 1）没有手竿时间和新鱼表：
+        /// 手竿各图从 0 毫秒算、新鱼表空（旧鱼不补标新），其余资产原样。别的版本不动，交给 Validate 拒绝。
+        /// </summary>
+        public static void Upgrade(Profile? p)
+        {
+            if (p == null || p.Schema != 1) return;
+            p.Schema = Profile.CurrentSchema;
+            p.RulesVersion = CaptureRules.RulesVersion;
+        }
+
+        /// <summary>
         /// 读进来的档案是否可用。不可用时调用方不能拿空档覆盖它（WA-06），返回原因；可用返回 null。
         /// </summary>
         public static string? Validate(Profile? p, FishCatalog fish, SkinCatalog skins)
@@ -364,9 +425,10 @@ namespace Moyu.Core.Play
             if (p == null) return "空档案";
             if (p.Schema != Profile.CurrentSchema) return "存档版本不认识";
             if (p.ModeInputs == null || p.Groups == null || p.Fish == null || p.Records == null || p.Tanks == null
-                || p.OwnedSkins == null || p.Equipped == null || p.Ledger == null) return "存档缺字段";
+                || p.OwnedSkins == null || p.Equipped == null || p.Ledger == null || p.NewFishIds == null) return "存档缺字段";
             if (p.LifetimeInputs < 0 || p.Coins < 0 || p.DuplicateStreak < 0) return "计数为负";
             if (p.Groups.Values.Any(g => g == null || g.Count < 0)) return "进度为负";
+            if (p.Groups.Values.Any(g => g.ElapsedMs < 0 || g.ElapsedMs >= CaptureRules.PoleIntervalMs)) return "手竿时间越界";
             if (p.Tanks.Count == 0) return "没有鱼缸";
             foreach (var f in p.Fish)
             {

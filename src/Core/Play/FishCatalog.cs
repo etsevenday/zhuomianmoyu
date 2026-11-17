@@ -6,7 +6,7 @@ namespace Moyu.Core.Play
 {
     /// <summary>
     /// 一种鱼（05 §2 六种临时鱼）。体长以整数毫米保存；价格只按整数毫米和整数币算（04 §1.1）。
-    /// 鱼名、描述【交文案策划定】，这里只有内部 ID。
+    /// 鱼名、描述按文案定稿 §8 放在网页 Texts，这里只有内部 ID。
     /// </summary>
     public sealed class FishSpecies
     {

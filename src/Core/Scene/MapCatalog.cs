@@ -10,7 +10,7 @@ namespace Moyu.Core.Scene
     public sealed class MapDef
     {
         public string Id { get; }
-        /// <summary>占位显示名（地图名【交文案策划定】，B0 Q5 定稿前用效果图上的"地图一/二/三"）。</summary>
+        /// <summary>显示名，按文案定稿 TXT-B0-016（地图一/二/三）。</summary>
         public string PlaceholderName { get; }
         public SceneRect Shore { get; }
         public SceneRect Shallow { get; }

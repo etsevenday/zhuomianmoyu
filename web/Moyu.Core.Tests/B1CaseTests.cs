@@ -308,7 +308,7 @@ public class B1CaseTests
         var p = PlayEngine.NewProfile("abc", 99, Skins);
         Assert.That(p.ProfileId, Is.EqualTo("abc"));
         Assert.That(p.Seed, Is.EqualTo(99));
-        Assert.That(p.RulesVersion, Is.EqualTo("web_core_0.1"));
+        Assert.That(p.RulesVersion, Is.EqualTo("web_core_0.2"));
         Assert.That(p.ContentVersion, Is.EqualTo("tmp_fish_0.1"));
         Assert.That(p.Tanks.Select(t => (t.Id, t.Capacity)), Is.EqualTo(new[] { ("tank1", 20) }));
         Assert.That(p.Coins, Is.EqualTo(0));
@@ -368,7 +368,8 @@ public class B1CaseTests
         // 原因会显示在底栏"读档失败"的悬停提示里
         var cases = new (string, Action<Profile>, string)[]
         {
-            ("版本", p => p.Schema = 2, "存档版本不认识"),
+            ("版本", p => p.Schema = 3, "存档版本不认识"),
+            ("旧版本没升级", p => p.Schema = 1, "存档版本不认识"),
             ("缺鱼表", p => p.Fish = null!, "存档缺字段"),
             ("缺纪录", p => p.Records = null!, "存档缺字段"),
             ("缺鱼缸表", p => p.Tanks = null!, "存档缺字段"),

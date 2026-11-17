@@ -154,8 +154,8 @@ async function run() {
     check('B0-15 首次进入角色已被安排在岸边', b && b.mode === 'Lure' && b.x >= 40 && b.x <= 1560 && b.y >= 540 && b.y <= 590, b);
     await clickBtn('更多'); await clickBtn('设置');
     const s = await ev(`[...document.querySelectorAll('.setting-row')].map(r => ({ t: r.querySelector('span').innerText, on: r.querySelector('[role=switch]').getAttribute('aria-checked') }))`);
-    check('B0-39 默认透明区穿透开、静音开', s.length === 2 && s[0].on === 'true' && s[1].on === 'true', s);
-    check('B0-42 网页版设置只有"透明区穿透""静音"两行', s.map(x => x.t).join('|') === '透明区穿透|静音', s.map(x => x.t));
+    check('B0-39 默认透明区穿透开、静音开', s.length >= 2 && s[0].on === 'true' && s[1].on === 'true', s);
+    check('B0-42 网页版设置依次是"透明区穿透""静音""置顶""后台输入"四行（B2 按 Q2 答复改）', s.map(x => x.t).join('|') === '透明区穿透|静音|置顶|后台输入', s.map(x => x.t));
     await clickBtn('更多');
   }
 

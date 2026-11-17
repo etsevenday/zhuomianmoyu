@@ -18,6 +18,8 @@ namespace Moyu.Core.State
         public bool Closed { get; set; }
         public bool Passthrough { get; set; } = true;
         public bool Mute { get; set; } = true;
+        public bool Topmost { get; set; } = true;
+        public bool BackgroundInput { get; set; }
         // Stryker disable once String : 缺字段或不认识的值都回落路亚，默认串改成别的结果一样
         public string Mode { get; set; } = "Lure";
         // Stryker disable once String : 空串和不认识的地图都回落默认地图，结果一样

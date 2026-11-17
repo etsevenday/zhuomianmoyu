@@ -367,16 +367,17 @@ await runBatch({
       await settle();
       const p0 = await P();
       await setMode('手竿');
+      const w0 = Date.now(), e0 = (await P()).Groups['pole|map1']?.ElapsedMs ?? 0;
       const cyc = await statText('cycle');
       await focusNotepad();
       await press(3000);
       await waitTotal(p0.LifetimeInputs + 3000, 60000);
-      const p1 = await P();
+      const p1 = await P(), wall = Date.now() - w0, elapsed = (p1.Groups['pole|map1']?.ElapsedMs ?? 0) - e0;
       await setMode('路亚');
       const same = Object.keys(p0.Groups).every(g => group(p0, g) === group(p1, g)) && Object.keys(p1.Groups).every(g => g.startsWith('pole') || group(p0, g) === group(p1, g));
-      check('B1-07 手竿 3000 次：总累计和手竿统计 +3000，路亚/摸鱼本轮不变、不出鱼，底栏写"计时未开放"、没有倒计时数字',
+      check('B1-07 手竿 3000 次：总累计和手竿统计 +3000，路亚/摸鱼本轮不变、不出鱼；按键不加快手竿时间；底栏显示本图手竿时间 mm:ss/30:00（B2 按 Q8 答复改）',
         p1.LifetimeInputs - p0.LifetimeInputs === 3000 && (p1.ModeInputs.pole ?? 0) - (p0.ModeInputs.pole ?? 0) === 3000 && same && p1.Fish.length === p0.Fish.length
-        && cyc.includes('计时未开放') && !/\d/.test(cyc), { total: p1.LifetimeInputs - p0.LifetimeInputs, pole: p1.ModeInputs.pole, cycle: cyc, fish: p1.Fish.length });
+        && /^本轮\d\d:\d\d\/30:00$/.test(cyc) && elapsed <= wall + 1500, { total: p1.LifetimeInputs - p0.LifetimeInputs, pole: p1.ModeInputs.pole, cycle: cyc, fish: p1.Fish.length, elapsed, wall });
     }
 
     // ───── B1-51 / B1-14 / B1-50 新鱼获卡片 ─────
@@ -529,11 +530,11 @@ await runBatch({
       await closePanels();
       const bg = await ev(`[...document.querySelectorAll('svg.scene .bg-fish')].map(g => g.dataset.fish)`);
       const pe = await ev(`[...document.querySelectorAll('svg.scene .bg-fish')].map(g => getComputedStyle(g).pointerEvents)`);
-      const hit = await ev(`(() => { const g = document.querySelector('svg.scene .bg-fish .fish'); const r = g.getBoundingClientRect(); const e = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2); return e?.closest('[data-hit]')?.getAttribute('data-hit') ?? e?.tagName; })()`);
+      const hit = await ev(`(() => { const g = document.querySelector('svg.scene .bg-fish .fish'); const r = g.getBoundingClientRect(); const e = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2); return e?.closest('.bg-tank') ? 'tank' : e?.closest('[data-hit]')?.getAttribute('data-hit') ?? e?.tagName; })()`);
       await shot('03-background');
       const prefs1 = await T('prefs()'), bear1 = await T('bear()');
-      check('B1-30 设为背景：场景水里游着缸里这 2 条；观赏鱼不接指针（点到的是水）；地图、模式、落点不变',
-        bg.length === 2 && ids.every(i => bg.includes(i)) && pe.every(v => v === 'none') && hit === 'water' && prefs1.MapId === prefs0.MapId && prefs1.Mode === prefs0.Mode && bear1.x === bear0.x,
+      check('B1-30 设为背景：底层鱼缸里游着缸里这 2 条；观赏鱼不接指针（点到的不是鱼缸层）；地图、模式、落点不变（B2 按 Q11 答复改为底层鱼缸）',
+        bg.length === 2 && ids.every(i => bg.includes(i)) && pe.every(v => v === 'none') && hit !== 'tank' && prefs1.MapId === prefs0.MapId && prefs1.Mode === prefs0.Mode && bear1.x === bear0.x,
         { bg, pe, hit });
 
       // B1-31 同缸同比例
@@ -549,9 +550,9 @@ await runBatch({
       await openPanel('鱼篓');
       await selectFish(ids[0]);
       const lenCell = await ev(`document.querySelector('.basket .fish-cell[data-fish="${ids[0]}"] .len').innerText`);
-      const lenDetail = await ev(`document.querySelector('.basket .fish-detail .len').innerText`);
+      const lenDetail = await ev(`document.querySelector('.basket .fish-detail .len').innerText.replace(/^体长\\s*/, '')`);
       await clickSel('.basket .sell');
-      const lenQuote = await ev(`document.querySelector('.confirm .line-row span:nth-child(2)').innerText`);
+      const lenQuote = await ev(`document.querySelector('.confirm .line-row').innerText.split(' · ')[1]`);
       await clickSel('.confirm .cancel');
       const mm = (await P()).Fish.find(f => f.Id === ids[0]).LengthMm;
       check('B1-31 鱼缸和背景里各鱼缩放比 = 体长比；同一条鱼在收藏、鱼篓、报价里的体长一样',
@@ -758,9 +759,9 @@ await runBatch({
       }
       const wallet = await ev(`document.querySelector('.draw .wallet').innerText.trim()`);
       const prefix = { Character: 'CHAR', Rod: 'ROD', Glove: 'GLOVE', Scene: 'SCENE' };
-      check('B1-47 皮肤页公示余额、单价 100、12 款各 1/12、连续重复次数；切页签只筛选（每页 4 件同类），公示不变',
+      check('B1-47 皮肤页公示余额、单价 100、12 款各 1/12（B2 换定稿句）、连续重复次数；切页签只筛选（每页 4 件同类），公示不变',
         wallet === String((await P()).Coins) && odds.every(o => o.odds === odds[0].odds && o.cells.length === 4 && o.cells.every(c => c.includes(prefix[o.tab])))
-        && odds[0].odds.includes('每抽100') && odds[0].odds.includes('12款各1/12') && /连续重复\d\/4/.test(odds[0].odds), { wallet, odds });
+        && odds[0].odds.includes('每抽100') && odds[0].odds.includes('12款外观各有1/12') && /连续重复\d\/4/.test(odds[0].odds), { wallet, odds });
 
       // B1-45 装备
       const mine = ['WEB_CHAR_02', 'WEB_ROD_03', 'WEB_GLOVE_01', 'WEB_SCENE_02'];
@@ -793,22 +794,30 @@ await runBatch({
     {
       await openPanel('记录');
       const p = await P();
-      const rows = await ev(`[...document.querySelectorAll('.record-row')].map(r => ({ sp: r.dataset.species, caught: r.dataset.caught === 'true', text: r.innerText.trim() }))`);
+      const readRows = () => ev(`[...document.querySelectorAll('.record-row')].map(r => ({ slot: r.dataset.slot, sp: r.dataset.species, caught: r.dataset.caught === 'true', text: r.innerText.trim() }))`);
+      const rows = await readRows();
       const found = await ev(`document.querySelector('[data-stat=records]').innerText.trim()`);
-      const shapes = [];
       const details = [];
       for (const r of rows) {
-        await clickSel(`.record-row[data-species=${r.sp}]`, 120);
-        shapes.push(await ev(`document.querySelector('.records .fish-detail svg.big').innerHTML.replace(/fill="[^"]*"/g, '')`));
-        details.push(await ev(`document.querySelector('.records .fish-detail').innerText.replace(/\\s+/g, ' ')`));
+        await clickSel(`.record-row[data-slot="${r.slot}"]`, 120);
+        details.push(await ev(`document.querySelector('.records .fish-detail').innerText.replace(/\\s+/g, ' ').trim()`));
       }
       const caughtOk = rows.every((r, i) => r.caught === !!p.Records[r.sp] && (r.caught
         ? details[i].includes(cm(p.Records[r.sp].MaxLengthMm)) && details[i].includes(`${p.Records[r.sp].Count} 次`)
-        : r.text === '？？？' && details[i].includes('出处')));
+        : r.sp === undefined && r.text === '？' && details[i] === '？'));
       const soldSpecies = p.Ledger.filter(e => e.Kind === 'Sale').flatMap(e => e.Lines.map(l => l.SpeciesId));
-      check('B1-52 记录页 6 行：抓到的显示最长体长和次数，没抓到的是问号和出处地图；顶部 n/6；卖掉的鱼种纪录还在',
-        rows.length === 6 && caughtOk && found === `${Object.keys(p.Records).length}/6` && soldSpecies.length > 0 && soldSpecies.every(s => p.Records[s]), { found, rows, details });
-      check('B1-53 6 种鱼的图形互不相同', new Set(shapes).size === 6, shapes.length);
+      check('B1-52 记录页 6 行：抓到的显示最长体长和次数，没抓到的只有"？"；顶部"已发现 n/6"；卖掉的鱼种纪录还在（B2 按 Q9 答复改）',
+        rows.length === 6 && caughtOk && found === `已发现 ${Object.keys(p.Records).length}/6` && soldSpecies.length > 0 && soldSpecies.every(s => p.Records[s]), { found, rows, details });
+      // 没抓到的不显示鱼形：先给存档补齐 6 种纪录，再逐个看图形
+      const SPECIES = ['TMP_F001', 'TMP_F002', 'TMP_F003', 'TMP_F101', 'TMP_F201', 'TMP_F301'];
+      await patch(q => { const any = Object.values(q.Records)[0]; for (const sp of SPECIES) q.Records[sp] ??= { ...any }; });
+      await openPanel('记录');
+      const shapes = [];
+      for (const r of await readRows()) {
+        await clickSel(`.record-row[data-slot="${r.slot}"]`, 120);
+        shapes.push(await ev(`document.querySelector('.records .fish-detail svg.big')?.innerHTML.replace(/fill="[^"]*"/g, '') ?? ''`));
+      }
+      check('B1-53 6 种鱼的图形互不相同', shapes.every(Boolean) && new Set(shapes).size === 6, shapes.length);
       await closePanels();
     }
 

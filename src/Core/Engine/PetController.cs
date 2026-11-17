@@ -123,6 +123,8 @@ namespace Moyu.Core.Engine
 
         public void SetPassthrough(bool on) => State.Settings.Passthrough = on;
         public void SetMute(bool on) => State.Settings.Mute = on;
+        public void SetTopmost(bool on) => State.Settings.Topmost = on;
+        public void SetBackgroundInput(bool on) => State.Settings.BackgroundInput = on;
 
         // ---- 保存与恢复 ----
 
@@ -134,6 +136,8 @@ namespace Moyu.Core.Engine
             Closed = State.Closed,
             Passthrough = State.Settings.Passthrough,
             Mute = State.Settings.Mute,
+            Topmost = State.Settings.Topmost,
+            BackgroundInput = State.Settings.BackgroundInput,
             Mode = State.Mode.ToString(),
             MapId = State.MapId,
             HasSpot = State.Spot.HasValue,
@@ -156,6 +160,8 @@ namespace Moyu.Core.Engine
                 state.Closed = prefs.Closed;
                 state.Settings.Passthrough = prefs.Passthrough;
                 state.Settings.Mute = prefs.Mute;
+                state.Settings.Topmost = prefs.Topmost;
+                state.Settings.BackgroundInput = prefs.BackgroundInput;
                 if (Enum.TryParse(prefs.Mode, out FishingMode mode) && Enum.IsDefined(typeof(FishingMode), mode))
                     state.Mode = mode;
                 if (maps.Find(prefs.MapId) != null) state.MapId = prefs.MapId;
