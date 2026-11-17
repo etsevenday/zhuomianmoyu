@@ -4,6 +4,27 @@
 @inject PetSession Session
 @inject IJSRuntime JS
 
+@if (_pc)
+{
+    @* PC 版：Electron 外壳的透明窗口就是小窗本身，没有假桌面、记事本、任务栏和试玩说明（B4） *@
+    <div class="pc-root" @ref="_desktop">
+        @if (_loaded && !Pet.State.Closed)
+        {
+            @if (Pet.State.Collapsed)
+            {
+                <div id="avatar" class="avatar" data-hit="avatar" title="恢复">
+                    <img src="img/icon.svg" alt="" draggable="false" />
+                </div>
+            }
+            else
+            {
+                <PetWindow Session="Session" OnCommit="Commit" Pc="true" />
+            }
+        }
+    </div>
+    return;
+}
+
 <div class="viewport">
     <div class="desktop" @ref="_desktop" @onclick="ClearIconSelection">
         <div class="icons">
@@ -86,6 +107,9 @@
     private Timer? _clock;
     private bool _loaded;
     private bool _dev;
+    private bool _pc;
+    private (bool, bool, bool)? _pcSynced;
+    private bool _quitting;
     private bool _failSaves;
     private string? _selectedIcon;
     private bool _notepadOpen = true;
@@ -112,13 +136,17 @@
     protected override async Task OnInitializedAsync()
     {
         Session.Changed += OnChanged;
+        _pc = Session.Pc = await JS.InvokeAsync<bool>("moyuPet.isPc");
         await Session.LoadAsync();
+        // PC 版关闭就是退出程序，再启动时小窗照常打开
+        if (_pc && Pet.State.Closed) Pet.Reopen();
         _loaded = true;
         _clock = new Timer(_ => InvokeAsync(StateHasChanged), null, 30000, 30000);
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
+        if (_pc && _loaded) await PcSyncAsync();
         if (!firstRender) return;
         _ref = DotNetObjectReference.Create(this);
         await JS.InvokeVoidAsync("moyuPet.init", _ref, _desktop);
@@ -130,6 +158,35 @@
     }
 
     private void OnChanged() => InvokeAsync(StateHasChanged);
+
+    // ---- PC 外壳（B4） ----
+
+    /// <summary>渲染完把收起、置顶、穿透交给外壳；点了关闭就先存档再退出程序（01 §5）。</summary>
+    private async Task PcSyncAsync()
+    {
+        if (Pet.State.Closed)
+        {
+            if (_quitting) return;
+            _quitting = true;
+            await Session.CommitPrefsAsync();
+            await Session.SaveNowAsync();
+            await JS.InvokeVoidAsync("moyuPet.pcQuit");
+            return;
+        }
+        var now = (Pet.State.Collapsed, Pet.State.Settings.Topmost, Pet.State.Settings.Passthrough);
+        if (_pcSynced == now) return;
+        _pcSynced = now;
+        await JS.InvokeVoidAsync("moyuPet.pcSync", now.Item1, now.Item2, now.Item3);
+    }
+
+    /// <summary>系统要关窗（Alt+F4、任务栏关闭）：和点关闭按钮一样。</summary>
+    [JSInvokable]
+    public Task OnPcClosing()
+    {
+        Pet.Close();
+        StateHasChanged();
+        return Task.CompletedTask;
+    }
 
     private Task Commit() => Session.CommitPrefsAsync();
 

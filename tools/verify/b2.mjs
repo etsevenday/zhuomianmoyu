@@ -722,7 +722,9 @@ await runBatch({
       })()`);
       const inside = (b, r) => b.x >= r.x && b.y >= r.y && b.x + b.w <= r.x + r.w && b.y + b.h <= r.y + r.h;
       const canvas = { x: 0, y: 0, w: 1600, h: 900 };
-      const sameScale = s.fish.length === 3 && s.fish.every(f => near(f.s / f.len, s.fish[0].s / s.fish[0].len, 0.001 * s.fish[0].s / s.fish[0].len));
+      // scale 在场景里只写到小数点后 3 位：用最大那条（相对误差最小）反推共用比例，每条的 scale 和它差不超过写出来的精度
+      const big = s.fish.reduce((a, f) => (f.len > a.len ? f : a), s.fish[0]);
+      const sameScale = s.fish.length === 3 && s.fish.every(f => near(f.s, big.s / big.len * f.len, 0.0006));
       await shot('03-bg-tank');
       check('B2-20 鱼缸层是场景第一个元素（最底下），小熊等都画在它上面；缸框在 1600×900 内、向内画、不填色；鱼裁在缸内且落在缸里；缸里鱼共用一个比例；整层不接指针',
         s.first && s.beforeBear && inside(s.frame, canvas) && s.frame.x > 0 && s.frameFill === 'none' && inside(s.clip, canvas) && s.clipped === 'url(#bg-tank-clip)'

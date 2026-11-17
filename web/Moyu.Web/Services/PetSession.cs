@@ -63,6 +63,9 @@ public sealed partial class PetSession
     public PlayEngine? Play { get; private set; }
     public bool Writer { get; private set; }
     public SaveState State { get; private set; } = SaveState.Loading;
+
+    /// <summary>在 PC 外壳（Electron）里跑：设置页不显示网页专属说明（B4，Q24 待文案）。</summary>
+    public bool Pc { get; set; }
     public string? LoadError { get; private set; }
 
     /// <summary>能不能计数和交易：拿到写权、读档正常、初始档已经存进去（03 §5）。</summary>

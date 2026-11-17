@@ -20,7 +20,8 @@ window.moyuPlay = (() => {
   let failSaves = false;
   let acts = 0;
 
-  const isGame = el => !!(el && el.closest && el.closest(GAME_UI));
+  // PC 版窗口里收到的键鼠都是对小窗的操作；后台全局输入另批再定（02 输入玩法接口），这里一律不算工作输入
+  const isGame = el => !!window.moyuPc || !!(el && el.closest && el.closest(GAME_UI));
 
   function work() {
     if (!dotnet) return;

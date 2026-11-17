@@ -1103,3 +1103,20 @@ body.dragging, body.dragging * { cursor: grabbing !important; }
 .friend-card svg { width: 84px; height: 60px; flex: none; }
 .friend-card .txt { display: flex; flex-direction: column; gap: 6px; font-size: 24px; font-weight: 800; white-space: nowrap; }
 .friend-card .tag { align-self: flex-start; padding: 0 10px; border: 3px solid var(--ink); border-radius: 14px; font-size: 20px; }
+
+/* ---------- B4 PC 外壳 ---------- */
+
+/* 透明窗口：页面背景透明，留白显示真实下层（TECH-01） */
+html.pc, html.pc body { background: transparent; }
+html.pc .boot { color: transparent; }
+.pc-root { position: fixed; inset: 0; }
+.pc-root .avatar { left: 0; top: 0; width: var(--pc-avatar, 67px); height: var(--pc-avatar, 67px); border-radius: 50%; }
+/* 右下角缩放热区：盖在底栏上面，只占角上一小块 */
+.pc-resize {
+    position: absolute;
+    right: 0; bottom: 0;
+    width: 14px; height: 14px;
+    z-index: 20;
+    cursor: nwse-resize;
+    pointer-events: auto;
+}

@@ -1,0 +1,13 @@
+{
+  "name": "moyu-pc",
+  "private": true,
+  "description": "桌面摸鱼 PC 外壳：Electron 装网页版 Blazor WASM 包",
+  "main": "src/main.js",
+  "scripts": {
+    "build:web": "node build-web.mjs",
+    "start": "electron ."
+  },
+  "devDependencies": {
+    "electron": "45.2.1"
+  }
+}

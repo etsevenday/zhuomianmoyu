@@ -348,18 +348,22 @@
                     <Toggle On="Pet.State.Settings.Mute" OnChange="SetMute" />
                 </div>
                 @* 网页演示开关：可以点、会记住，但不改系统置顶、不收页面外输入，也不改什么输入算数 *@
-                <div class="setting-row" data-setting="topmost" title="@Texts.DemoSwitchNote">
+                <div class="setting-row" data-setting="topmost" title="@DemoNote">
                     <span>置顶</span>
                     <Toggle On="Pet.State.Settings.Topmost" OnChange="SetTopmost" />
                 </div>
-                <div class="setting-row" data-setting="background-input" title="@Texts.DemoSwitchNote">
+                <div class="setting-row" data-setting="background-input" title="@DemoNote">
                     <span>后台输入</span>
                     <Toggle On="Pet.State.Settings.BackgroundInput" OnChange="SetBackgroundInput" />
                 </div>
             </div>
             <div class="setting-notes">
-                <div class="setting-note" data-note="demo">置顶、后台输入：@Texts.DemoSwitchNote</div>
-                <div class="setting-note" data-note="input">@Texts.InputScopeHelp</div>
+                @* PC 版里置顶是真的，输入范围也不是"本页面"：这两句网页专属说明先不显示，等 PC 版文案（Q24） *@
+                @if (!Session.Pc)
+                {
+                    <div class="setting-note" data-note="demo">置顶、后台输入：@Texts.DemoSwitchNote</div>
+                    <div class="setting-note" data-note="input">@Texts.InputScopeHelp</div>
+                }
                 <div class="setting-note" data-note="help">@Texts.CollapseHelp @Texts.CloseHelp @Texts.PlaceHelp</div>
             </div>
             </div>
@@ -545,6 +549,8 @@
 }
 
 @code {
+    private string? DemoNote => Session.Pc ? null : Texts.DemoSwitchNote;
+
     [Parameter, EditorRequired] public PetSession Session { get; set; } = null!;
     [Parameter] public EventCallback OnChanged { get; set; }
 

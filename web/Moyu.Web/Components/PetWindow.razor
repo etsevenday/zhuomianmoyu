@@ -1,9 +1,8 @@
 @* 16:9 透明小窗。外层是桌面逻辑像素（480×270），里层按 1600×900 设计稿排版后整体缩放。
    穿透开（默认）：外层不接指针，只有画出来的实体（岸、水、角色、按钮、面板）接；
    穿透关：外层也接指针，留白点了没反应、仍然透明（DEC-09）。 *@
-<div id="pet" class="pet @(Pet.State.Settings.Passthrough ? "" : "capture")"
-     style="left:@Px(Pet.State.Window.X);top:@Px(Pet.State.Window.Y);width:@Px(Pet.Layout.WindowWidth);height:@Px(Pet.Layout.WindowHeight)">
-    <div class="design" style="transform:scale(@F(Pet.Layout.WindowWidth / SceneCanvas.Width))">
+<div id="pet" class="pet @(Pet.State.Settings.Passthrough ? "" : "capture")" style="@WindowStyle">
+    <div class="design" style="@DesignStyle">
         <PetScene Session="Session" />
 
         <div class="topbar">
@@ -43,14 +42,29 @@
             <button class="pill tab @(MoreOn ? "on" : "")" title="更多" @onclick="() => Toggle(Panel.More)"><Icon Name="gear" /></button>
         </div>
     </div>
+    @if (Pc)
+    {
+        @* PC 右下角缩放热区：只改窗口大小，保持 16:9（05 §6.1）；网页版没有（TECH-26） *@
+        <div class="pc-resize" data-hit="resize"></div>
+    }
 </div>
 
 @code {
     [Parameter, EditorRequired] public PetSession Session { get; set; } = null!;
     [Parameter] public EventCallback OnCommit { get; set; }
+    /// <summary>PC 版：小窗填满外壳窗口，按窗口宽缩放设计稿（js/pet.js 写 --pc-scale）。</summary>
+    [Parameter] public bool Pc { get; set; }
 
     private PetController Pet => Session.Pet;
     private PlayEngine? Play => Session.Play;
+
+    private string WindowStyle => Pc
+        ? "left:0;top:0;width:100%;height:100%"
+        : $"left:{Px(Pet.State.Window.X)};top:{Px(Pet.State.Window.Y)};width:{Px(Pet.Layout.WindowWidth)};height:{Px(Pet.Layout.WindowHeight)}";
+
+    private string DesignStyle => Pc
+        ? "transform:scale(var(--pc-scale, 0.3))"
+        : $"transform:scale({F(Pet.Layout.WindowWidth / SceneCanvas.Width)})";
 
     // 底栏文字按文案定稿 TXT-STAT（Texts）
     private string CycleText
