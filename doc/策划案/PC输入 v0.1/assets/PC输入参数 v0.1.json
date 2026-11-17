@@ -1,0 +1,100 @@
+{
+  "schema_version": 1,
+  "document_only": true,
+  "rules_version": "pc_input_0.1",
+  "date": "2026-11-18",
+  "status": "用户Q23/Q24已答，待开发接入及真实Windows验收",
+  "platform": "Windows PC",
+  "decision_sources": {
+    "source": "Q23①系统级计数，②默认开，③收起/遮挡手竿继续；Q24总控文案、缩放仅光标",
+    "direct_user_choices": true
+  },
+  "background_input": {
+    "default_enabled": true,
+    "persist_real_user_choice": true,
+    "legacy_demo_value_is_real_preference": false,
+    "migrate_legacy_demo_as_first_real_feature": true,
+    "web_demo_preferences_shared": false,
+    "running_success_separate_from_requested_enabled": true,
+    "first_notice_only_after_running_success": true
+  },
+  "scope": {
+    "system_input_outside_own_game_ui": true,
+    "pc_requires_window_focus": false,
+    "web_stays_page_only": true,
+    "pc_dom_events_count_as_second_source": false,
+    "game_ui_counts": false,
+    "transparent_click_received_by_underlying_work_app_counts": true,
+    "autostart_at_windows_login": false,
+    "separate_web_helper_included": false
+  },
+  "counting": {
+    "physical_keydown": 1,
+    "auto_repeat_counts": false,
+    "key_up_counts": false,
+    "combination_keys_individual": true,
+    "composition_commit_additional_counts": false,
+    "mouse_click": 1,
+    "mouse_buttons": [
+      "primary",
+      "middle",
+      "secondary"
+    ],
+    "mouse_drag_move_scroll_counts": false,
+    "time_merge_window_ms": 0,
+    "extra_rate_cap": null,
+    "delayed_old_session_input_counts": false
+  },
+  "privacy": {
+    "persist_key_names": false,
+    "persist_typed_text": false,
+    "persist_pointer_coordinates": false,
+    "persist_application_names": false,
+    "send_raw_input_to_room": false,
+    "temporary_filter_state_only": true,
+    "intercept_work_input": false
+  },
+  "lifecycle": {
+    "collapsed_input_continues_when_enabled": true,
+    "occluded_input_continues_when_enabled": true,
+    "focus_loss_disables_capture": false,
+    "topmost_affects_capture": false,
+    "exit_stops_new_capture": true,
+    "disabled_period_catchup": false,
+    "offline_catchup": false
+  },
+  "pole": {
+    "independent_of_background_input_switch": true,
+    "collapsed_counts": true,
+    "occluded_counts": true,
+    "exit_counts": false,
+    "baseline_interval_ms": 1800000,
+    "check_gap_exclusion_ms": 300000,
+    "exclude_strictly_greater": true,
+    "offline_catchup": false
+  },
+  "assets": {
+    "reuse_existing_nodes_and_prices": true,
+    "preserve_existing_progress_and_assets": true,
+    "input_idempotency": true,
+    "freeze_mode_map_at_acceptance": true,
+    "frame_rate_changes_input_count": false
+  },
+  "ui": {
+    "pc_topmost_is_real": true,
+    "web_topmost_remains_demo": true,
+    "resize_text_added": false,
+    "first_notice_steals_focus": false
+  },
+  "copy": {
+    "source": "文案交接 v0.1/05 PC输入与设置文案定稿.md",
+    "id_count": 24,
+    "user_authorized_total_control": true
+  },
+  "acceptance": {
+    "prefix": "PCI",
+    "count": 12,
+    "real_os_external_app_evidence_required": true,
+    "synthetic_only_is_insufficient": true
+  }
+}

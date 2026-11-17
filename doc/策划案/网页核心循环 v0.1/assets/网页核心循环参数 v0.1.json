@@ -540,7 +540,7 @@
   },
   "open_items": [
     "更多鱼缸购买经济",
-    "原生PC实现（窗口尺寸已按Q6/Q7答复）",
+    "PC系统输入接入与真实桌面验证（Q23/Q24规则已答，见PC输入 v0.1）",
     "PC/Steam真实连接与网络验收（房间规则已按Q14—Q22答复，见同图房间 v0.1）",
     "云同步与扩展图鉴"
   ],
@@ -584,5 +584,6 @@
     "unknown_fish_text": "？",
     "status": "本轮逐字定稿"
   },
-  "room_rules_reference": "同图房间 v0.1/01 房间规则与模拟陪伴.md"
+  "room_rules_reference": "同图房间 v0.1/01 房间规则与模拟陪伴.md",
+  "pc_input_rules_reference": "PC输入 v0.1/01 PC后台输入与开关.md"
 }
