@@ -1,0 +1,116 @@
+{
+  "schema_version": 1,
+  "document_only": true,
+  "date": "2026-11-17",
+  "rules_version": "room_rules_0.1",
+  "scope": {
+    "web_mode": "local_simulation",
+    "real_web_network": false,
+    "web_invite_link": false,
+    "backend_account_required": false,
+    "steam_friend_invites_retained_for_pc": true,
+    "pc_real_network_tests_pending": true
+  },
+  "capacity": {
+    "max_members_including_host": 4,
+    "min_members": 1,
+    "simulated_member_limit_when_one_human": 3,
+    "three_maps_require_full_shore_shallow_and_mixed_checks": true
+  },
+  "authority": {
+    "personal_assets": {
+      "source": "user_delegated_to_developer_Q16",
+      "marker": "【交开发方定】",
+      "recommended": "each_member_calculates_and_saves_own",
+      "remote_presentation_can_award_local_assets": false,
+      "room_messages_include_raw_keys": false
+    },
+    "shared_positions": "host_confirms",
+    "single_host_and_epoch_required": true
+  },
+  "map": {
+    "creation_uses_creator_current_map": true,
+    "on_join": "follow_current_room_map",
+    "old_progress": "pause_and_preserve_mode_map_groups",
+    "switch_permission": "current_host_only",
+    "switch_applies_to_all": true,
+    "on_leave": "stay_last_confirmed_room_map",
+    "mode_per_member": true
+  },
+  "lifecycle": {
+    "host_departure": "automatic_host_migration",
+    "host_disconnect": "remove_then_migrate",
+    "old_host_return": "ordinary_new_join",
+    "migration_retains_map_and_remaining_member_spots": true,
+    "migration_adopts_new_host_theme_and_background": true,
+    "on_migration_failure": "solo_last_confirmed_map_with_rejoin_entry",
+    "disconnect_seat_retention_seconds": 0,
+    "disconnect_after_confirmation": "remove_member_and_release_spot",
+    "rejoin_spot": "automatic_new_arrangement_no_original_guarantee",
+    "empty_room": "end",
+    "web_refresh": "return_solo_clear_simulated_room",
+    "personal_assets_reset_on_room_events": false
+  },
+  "appearance": {
+    "character_rod_glove": "each_member_equipped",
+    "scene_theme": "current_host_equipped",
+    "background_tank": "current_host_selected",
+    "shared_display_overwrites_local_preferences": false,
+    "restore_local_preferences_after_leave": true,
+    "background_logical_bounds": {
+      "width": 1600,
+      "height": 900
+    },
+    "background_layer": "lowest_inside_game_canvas",
+    "background_accepts_pointer": false
+  },
+  "friend_catch": {
+    "animation": true,
+    "card": true,
+    "card_duration_ms": 4000,
+    "fields": [
+      "owner",
+      "fish_image",
+      "fish_name",
+      "length_cm"
+    ],
+    "sound": true,
+    "respects_local_mute": true,
+    "ordinary_input_per_key_sound": false,
+    "steals_focus": false,
+    "expands_collapsed_window": false,
+    "replays_old_events": false,
+    "adds_to_local_assets_stats_records_or_unread": false
+  },
+  "friend_collection": {
+    "enabled": true,
+    "access": "same_room_read_only",
+    "scope": "that_members_current_background_tank_only",
+    "expose": [
+      "owner",
+      "tank_display_id",
+      "fish_image",
+      "fish_name",
+      "length_mm",
+      "occupancy",
+      "snapshot_revision"
+    ],
+    "expose_basket_coins_inputs_or_other_tanks": false,
+    "can_withdraw_sell_import_or_set_own_background": false,
+    "view_unlocks_local_discovery": false,
+    "display_live_after_member_leaves": false
+  },
+  "copy": {
+    "source": "文案交接 v0.1/04 B3房间文案定稿.md",
+    "id_count": 64,
+    "authorization": "user_explicit_Q22_total_control_authorship",
+    "implies_shioko0315_confirmation": false
+  },
+  "acceptance": {
+    "simulation_prefix": "SIM",
+    "simulation_count": 13,
+    "real_pc_prefix": "NET",
+    "real_pc_count": 5,
+    "simulation_does_not_prove_real_network": true
+  }
+}

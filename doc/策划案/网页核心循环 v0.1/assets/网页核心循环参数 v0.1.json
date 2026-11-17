@@ -541,7 +541,7 @@
   "open_items": [
     "更多鱼缸购买经济",
     "原生PC实现（窗口尺寸已按Q6/Q7答复）",
-    "Steam/房主权威/迁移/真实多人",
+    "PC/Steam真实连接与网络验收（房间规则已按Q14—Q22答复，见同图房间 v0.1）",
     "云同步与扩展图鉴"
   ],
   "records": {
@@ -583,5 +583,6 @@
     "skin_names_and_descriptions": 16,
     "unknown_fish_text": "？",
     "status": "本轮逐字定稿"
-  }
+  },
+  "room_rules_reference": "同图房间 v0.1/01 房间规则与模拟陪伴.md"
 }
