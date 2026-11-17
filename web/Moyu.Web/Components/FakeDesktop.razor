@@ -171,6 +171,21 @@
     [JSInvokable]
     public void DevPoleTick() => Session.PoleCheck();
 
+    /// <summary>把上一条好友收获消息和一条旧代次消息再送一次，返回被接受了几条（应为 0）。</summary>
+    [JSInvokable]
+    public Task<int> DevRoomReplay() => Session.DevRoomReplayAsync();
+
+    /// <summary>界面上这时点不到的房间演示：catch 好友收获、drop 成员断线、end 结束模拟；和演示控制走同一套方法。</summary>
+    [JSInvokable]
+    public async Task DevRoom(string action, string? id)
+    {
+        if (id != null) Session.SelectedMemberId = id;
+        if (action == "catch") await Session.FriendCatchAsync();
+        else if (action == "drop") Session.Disconnect();
+        else if (action == "end") Session.EndSimulation();
+        await Commit();
+    }
+
     private async Task ToggleSaveFailure() => await JS.InvokeAsync<object>("moyuDev.failSaves", !_failSaves);
 
     [JSInvokable]
@@ -199,7 +214,7 @@
     [JSInvokable]
     public async Task OnSceneClicked(string kind, double x, double y)
     {
-        var result = Pet.ClickScene(new ScenePoint(x, y));
+        var result = Session.ClickScene(new ScenePoint(x, y));
         if (result == PlaceResult.NoRoom)
         {
             _noRoomCts?.Cancel();

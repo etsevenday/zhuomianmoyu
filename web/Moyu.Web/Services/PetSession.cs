@@ -31,7 +31,7 @@ public sealed class CatchCard
 /// 网页里的一局：窗口控制器、玩法引擎与存档、面板上的临时选择、提示。
 /// 输入和手竿计时直接改当前档案并稍后存；收藏、出售、抽取、装备在档案副本上做、存成功才换上（06 §3 一笔事务）。
 /// </summary>
-public sealed class PetSession
+public sealed partial class PetSession
 {
     public const int CardMs = 4000;
     private const int SaveDebounceMs = 800;

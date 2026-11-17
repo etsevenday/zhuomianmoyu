@@ -112,8 +112,6 @@ public static class Texts
     public const string MuteHelp = "静音只影响声音，不影响动作、计数和鱼获。"; // TXT-SET-008
     public const string TrialNote = "试玩版本，部分美术为临时素材。好友联机与更多鱼缸尚未开放。"; // TXT-SET-009
     public const string FakeDesktopNote = "这是网页内的模拟桌面，不会控制真实系统桌面。"; // TXT-SET-010
-    public const string RoomClosed = "好友联机尚未开放。"; // TXT-SET-011
-    public const string RoomInviteClosed = "尚未开放"; // TXT-SET-012
     public const string ArtPlaceholder = "当前美术为临时素材，正式素材将逐步替换。"; // TXT-SET-013
 
     // ---- 计数、计时与保存（定稿 §4） ----
@@ -179,6 +177,47 @@ public static class Texts
 
     /// <summary>体长：整数毫米显示成一位小数的厘米，不经过浮点。</summary>
     public static string Cm(int mm) => $"{mm / 10}.{mm % 10} cm";
+
+    // ---- 同图房间，网页本机模拟（《文案交接 v0.1/04 B3房间文案定稿》，Q22 答复）。PC 真实房间的 038—048 网页不接 ----
+
+    public const string RoomSimIntro = "本机模拟好友，用于体验同图陪伴。当前不会连接真实好友或Steam。"; // TXT-ROOM-002
+    public static string SimFriendName(int n) => $"模拟好友{n}"; // TXT-ROOM-010
+    public const string RoomSampleNote = "模拟鱼获和鱼缸仅作展示，不会加入你的鱼篓、金币或捕获记录。"; // TXT-ROOM-011
+    public const string RoomNone = "还未进入模拟房间。"; // TXT-ROOM-012
+    public const string RoomRefreshNote = "刷新会结束本次模拟，个人进度和资产按已保存状态恢复。"; // TXT-ROOM-013
+    public const string RoomNoInvite = "网页版暂不提供真实邀请链接。Steam好友邀请将在PC版接入。"; // TXT-ROOM-014
+    public static string RoomCount(int n) => $"{n}/4"; // TXT-ROOM-016
+    public static string RoomCountFull(int n) => $"房间人数 {n}/4（含房主）"; // TXT-ROOM-016
+    public static string RoomMap(string map) => $"当前地图：{map}"; // TXT-ROOM-018
+    public const string RoomHostOnlyMap = "只有房主可以切换地图。"; // TXT-ROOM-019
+    public const string RoomHostMapHelp = "切换后，全房成员会一起前往所选地图。各地图进度分别保留。"; // TXT-ROOM-020
+    public static string RoomFollowed(string map) => $"已跟随房间前往{map}，原地图进度已保留。"; // TXT-ROOM-021
+    public static string RoomLeft(string map) => $"已离开房间，留在{map}。个人进度和资产已保留。"; // TXT-ROOM-023
+    public const string RoomFull = "房间已满（4/4）。"; // TXT-ROOM-024
+    public const string RoomFollowHostNote = "房间场景主题与背景鱼缸跟随当前房主，离房后恢复你的显示设置。"; // TXT-ROOM-025
+    public const string RoomOwnOutfitNote = "每位成员显示自己装备的人物、鱼竿和手套。"; // TXT-ROOM-026
+    public const string RoomMigratingLocked = "正在切换房主，暂时不能切图或换位。"; // TXT-ROOM-027
+    public const string RoomEnded = "房间已结束，已返回单机。个人进度和资产已保留。"; // TXT-ROOM-028
+    public const string RoomMigrating = "房主已离开，正在切换房主…"; // TXT-ROOM-029
+    public static string RoomNewHost(string name) => $"{name}已成为房主。"; // TXT-ROOM-030
+    public const string RoomMigrationFailed = "房主迁移失败，已返回单机。个人进度和资产已保留。"; // TXT-ROOM-031
+    public static string RoomRejoined(string name) => $"{name}已重新加入房间。"; // TXT-ROOM-033
+    public static string RoomMemberGone(string name) => $"{name}已断线，位置已释放。"; // TXT-ROOM-034
+    public const string RoomSelfDropped = "连接已中断，原位置已释放。重新加入后会重新安排位置。"; // TXT-ROOM-035
+    public const string RoomRejoining = "正在重新加入房间…"; // TXT-ROOM-036
+    public const string RoomRejoinFailed = "重新加入失败，你仍可继续单机游玩。"; // TXT-ROOM-037
+    public static string FriendCatchTitle(string name) => $"{name}的新鱼获"; // TXT-ROOM-049
+    public static string FriendCatchLine(string speciesId, int mm) => $"{FishName(speciesId)} · {mm / 10}.{mm % 10} cm"; // TXT-ROOM-050、059
+    public const string FriendCatchNote = "好友收获只作展示，不会加入你的鱼篓、新鱼数量或捕获记录。"; // TXT-ROOM-052
+    public static string TankViewTitle(string name) => $"{name}的背景鱼缸"; // TXT-ROOM-054
+    public const string TankShareNote = "同房成员可查看你当前设为背景的鱼缸；鱼篓、金币和其他收藏不会在这里公开。"; // TXT-ROOM-055
+    public const string TankReadOnlyNote = "这里只能查看，不能取回、出售或加入自己的收藏。"; // TXT-ROOM-056
+    public const string TankNotSet = "对方还未设置背景鱼缸。"; // TXT-ROOM-057
+    public const string FriendTankEmpty = "这个鱼缸暂时没有鱼。"; // TXT-ROOM-058
+    public static string TankOccupancy(int n) => $"{n}/20"; // TXT-ROOM-059
+    public const string TankGone = "对方已离开房间，暂时无法查看。"; // TXT-ROOM-060
+    public const string TankExpired = "这份展示已失效，请返回房间重新选择成员。"; // TXT-ROOM-063
+    public const string FriendSoundNote = "好友收获提示音受静音开关控制；静音后仍显示动作和卡片。"; // TXT-ROOM-064
 
     /// <summary>列表里的短时间。</summary>
     public static string Time(long ms) =>

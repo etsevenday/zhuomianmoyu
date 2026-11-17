@@ -67,7 +67,7 @@ const T_ = {
   allOwned: '已拥有全部可抽外观，不再扣除金币。',
   cosmetic: '外观只改变样子，不影响出鱼、售价或鱼缸容量。',
   equipHelp: '新外观不会自动装备，可以在这里主动更换。',
-  roomClosed: '好友联机尚未开放。',
+  roomNone: '还未进入模拟房间。',
   trial: '试玩版本，部分美术为临时素材。好友联机与更多鱼缸尚未开放。',
   modeHelp: {
     路亚: '工作时输入键盘或点击鼠标，角色就会提竿。第500次有50%机会出鱼；本轮累计到1000次必得一条。成功后本轮重新计数。',
@@ -273,7 +273,8 @@ await runBatch({
       const help = await ev(`Object.fromEntries([...document.querySelectorAll('.mode-menu .opt')].map(b => [b.innerText.trim(), b.title]))`);
       await clickBtn(await modeNow());
       await openPanel('房间');
-      const room = await ev(`({ note: document.querySelector('.room .sample-note')?.innerText.trim(), me: document.querySelector('.room .member span')?.innerText.trim(), invite: (() => { const b = [...document.querySelectorAll('.room button')].find(b => b.innerText.trim() === '邀请好友'); return b && { disabled: b.disabled, title: b.title }; })() })`);
+      // B3 改：房间页换成本机模拟（同图房间 Q14），没进房间时写"还未进入模拟房间。"，不再有"邀请好友"
+      const room = await ev(`({ none: document.querySelector('.room [data-stat=room-none]')?.innerText.trim(), invite: [...document.querySelectorAll('.room button')].some(b => b.innerText.trim() === '邀请好友') })`);
       await closePanels();
       const corner = await ev(`document.querySelector('.placeholder-note')?.innerText ?? ''`);
       const offenders = [];
@@ -285,8 +286,8 @@ await runBatch({
         }
       })(path.join(REPO, 'web/Moyu.Web'));
       const page = await ev(`document.body.innerText`);
-      check('B2-29 三种模式各有定稿帮助句（手竿写 30 分钟）；房间"好友联机尚未开放。"、"我"、"邀请好友"不可用；角落试玩说明；网页代码和页面里没有"计时未开放""出处：""？？？"和文案占位',
-        Object.entries(T_.modeHelp).every(([k, v]) => help[k] === v) && room.note === T_.roomClosed && room.me === '我' && room.invite?.disabled && room.invite.title === '尚未开放'
+      check('B2-29 三种模式各有定稿帮助句（手竿写 30 分钟）；房间页写"还未进入模拟房间。"、没有"邀请好友"（B3 改）；角落试玩说明；网页代码和页面里没有"计时未开放""出处：""？？？"和文案占位',
+        Object.entries(T_.modeHelp).every(([k, v]) => help[k] === v) && room.none === T_.roomNone && !room.invite
         && corner.includes(T_.trial) && offenders.length === 0 && !/计时未开放|出处：/.test(page), { help, room, corner, offenders });
     }
 

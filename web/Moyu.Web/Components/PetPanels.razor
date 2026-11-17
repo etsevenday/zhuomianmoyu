@@ -158,7 +158,7 @@
                     }
                 </div>
             </div>
-            <div class="bg-help">@Texts.TankBackgroundHelp</div>
+            <div class="bg-help">@Texts.TankBackgroundHelp@if (Session.FollowingHost) { <span class="tag follow-host" title="@Texts.RoomFollowHostNote">跟随房主</span> }</div>
             <div class="panel-actions">
                 @if (IsBackground)
                 {
@@ -214,20 +214,26 @@
         break;
 
     case Panel.Map:
-        <div class="panel solid map-panel">
+        @* 同图房间里只有房主能切图，切了全房一起去（Q17）；普通成员三行都不能点。迁移中谁都不是房主，点了提示稍后再试 *@
+        var memberOnly = Session.Room is { Migrating: false } && !Session.IsHost;
+        <div class="panel solid map-panel @(Session.Room != null ? "in-room" : "")">
             <PanelHead Title="地图" OnClose="Close" />
             <div class="map-list">
                 @for (int i = 0; i < Pet.Maps.All.Count; i++)
                 {
                     var map = Pet.Maps.All[i];
                     var on = map.Id == Pet.State.MapId;
-                    <button class="map-row @(on ? "on" : "")" title="@(on ? "当前地图" : map.PlaceholderName)" @onclick="() => SelectMap(map.Id)">
+                    <button class="map-row @(on ? "on" : "")" disabled="@memberOnly" title="@(memberOnly ? Texts.RoomHostOnlyMap : on ? "当前地图" : map.PlaceholderName)" @onclick="() => SelectMap(map.Id)">
                         <span class="thumb t@(i)"></span>
                         <span class="name">@map.PlaceholderName</span>
                         <span class="radio">@if (on) { <Icon Name="check" /> }</span>
                     </button>
                 }
             </div>
+            @if (Session.Room is { } mr)
+            {
+                <div class="map-note" data-note="@(memberOnly ? "host-only" : mr.Migrating ? "migrating" : "host")">@(memberOnly ? Texts.RoomHostOnlyMap : mr.Migrating ? Texts.RoomMigratingLocked : Texts.RoomHostMapHelp)</div>
+            }
         </div>
         break;
 
@@ -240,6 +246,10 @@
                     <button class="pill tabpill @(Session.SkinTab == c ? "lime" : "")" data-tab="@c" @onclick="() => Session.SkinTab = c">@Texts.Category(c)</button>
                 }
             </div>
+            @if (Session.FollowingHost && Session.SkinTab == SkinCategory.Scene)
+            {
+                <div class="follow-note"><span class="tag follow-host" title="@Texts.RoomFollowHostNote">跟随房主</span>@Texts.RoomFollowHostNote</div>
+            }
             <div class="panel-body split">
                 <div class="preview">
                     <div class="skin-grid">
@@ -359,16 +369,159 @@
     case Panel.Room:
         <div class="panel solid room">
             <PanelHead Title="房间" OnClose="Close" />
-            <div class="room-body">
-                <div class="member"><img src="img/icon.svg" alt="" /><span>我</span></div>
-                <div class="member empty"><span>＋</span></div>
-            </div>
-            <div class="panel-actions">
-                <button class="btn lime" disabled title="@Texts.RoomInviteClosed">邀请好友</button>
-            </div>
-            <div class="sample-note">@Texts.RoomClosed</div>
+            @if (Session.ViewedTank is { } view)
+            {
+                @* 只读看某成员当前的背景缸（Q21）：只有鱼形、名称、体长和占用；没有取回、出售、设为背景 *@
+                <div class="tank-view" data-view-state="@(view.State?.ToString() ?? "Expired")">
+                    <div class="view-head"><b>@Texts.TankViewTitle(view.Name)</b><span class="tag readonly">只读</span></div>
+                    <div class="room-notes"><div>@Texts.TankShareNote</div><div>@Texts.TankReadOnlyNote</div></div>
+                    @if (view.State == TankViewState.Fish)
+                    {
+                        var vf = view.Tank.Fish;
+                        var vs = Math.Min(1.4, 300.0 / Math.Max(1, vf.Select(f => f.LengthMm).DefaultIfEmpty(1).Max()));
+                        <div class="view-body">
+                            <svg class="tank" viewBox="0 0 600 300">
+                                <rect x="6" y="6" width="588" height="288" rx="18" fill="#8cc9b2" class="line" />
+                                <path d="M6 40 H594" stroke="#b9e3d3" stroke-width="16" />
+                                @for (int i = 0; i < vf.Count; i++)
+                                {
+                                    var (x, y) = TankSpot(i);
+                                    <Fish Species="@vf[i].SpeciesId" X="x" Y="y" Length="@(vf[i].LengthMm * vs)" />
+                                }
+                            </svg>
+                            <div class="view-list">
+                                <div class="cap" data-stat="view-cap">@Texts.TankOccupancy(vf.Count)</div>
+                                @foreach (var f in vf)
+                                {
+                                    <div class="view-fish" data-species="@f.SpeciesId" data-len="@f.LengthMm">@Texts.FriendCatchLine(f.SpeciesId, f.LengthMm)</div>
+                                }
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="hint view-state">@ViewStateText(view.State)</div>
+                    }
+                    <div class="panel-actions"><button class="btn back" @onclick="Session.CloseTankView">房间</button></div>
+                </div>
+            }
+            else if (Session.Room is not { } room)
+            {
+                @* 没进房间：只有本机模拟的入口；网页不给真实邀请（TXT-ROOM-002、012—014） *@
+                <div class="room-none">
+                    <div class="none-title" data-stat="room-none">@Texts.RoomNone</div>
+                    <div class="room-notes">
+                        <div>@Texts.RoomSimIntro</div>
+                        <div>@Texts.RoomNoInvite</div>
+                        <div>@Texts.RoomRefreshNote</div>
+                    </div>
+                    @if (Session.RoomStatus is { } status)
+                    {
+                        <div class="room-status" data-stat="room-status">@status</div>
+                    }
+                </div>
+                <div class="panel-actions">
+                    @if (Session.CanRejoin || Session.Rejoining)
+                    {
+                        <button class="btn purple rejoin" disabled="@Session.Rejoining" @onclick="RoomRejoin">重新加入</button>
+                    }
+                    <button class="btn lime create" disabled="@Session.Rejoining" @onclick="() => RoomOp(Session.CreateRoom)">创建模拟房间</button>
+                    <button class="btn lime join" disabled="@Session.Rejoining" @onclick="() => RoomOp(Session.JoinRoom)">加入模拟房间</button>
+                </div>
+            }
+            else
+            {
+                <div class="room-main">
+                    <div class="room-left">
+                        <div class="room-info">
+                            <span class="tag sim" data-stat="room-kind">本机模拟</span>
+                            <span class="count" data-stat="room-count" data-count="@room.Members.Count">@Texts.RoomCountFull(room.Members.Count)</span>
+                            <span class="map" data-stat="room-map" data-map="@room.MapId">@Texts.RoomMap(Session.MapName(room.MapId))</span>
+                        </div>
+                        @if (room.Migrating)
+                        {
+                            <div class="room-status" data-stat="room-migrating">@Texts.RoomMigrating</div>
+                        }
+                        <div class="member-list">
+                            @foreach (var m in room.Members)
+                            {
+                                var host = m.Id == room.HostId;
+                                var (ch, rod, glove) = Outfit(m);
+                                <div class="member-row @(Session.SelectedMemberId == m.Id ? "on" : "")" data-member="@m.Id" data-self="@(m.IsSelf ? "true" : "false")" data-host="@(host ? "true" : "false")" data-mode="@m.Mode"
+                                     @onclick="() => Session.SelectedMemberId = m.Id">
+                                    <svg viewBox="-180 -380 640 480" class="mini"><Bear Preview Mode="m.Mode" Spot="new(0, 0)" Character="@ch" Rod="@rod" Glove="@glove" /></svg>
+                                    <span class="who">
+                                        <b class="nm">@m.Name</b>
+                                        <span class="tags">
+                                            @if (m.IsSelf) { <span class="tag self">我</span> }
+                                            <span class="tag role">@(host ? "房主" : "成员")</span>
+                                            @if (m.IsSimulated) { <span class="tag sim">模拟成员</span> }
+                                        </span>
+                                    </span>
+                                    <span class="mode">@Texts.ModeName(m.Mode)</span>
+                                    <button class="btn small view" @onclick="() => Session.ViewTank(m.Id)" @onclick:stopPropagation="true">查看鱼缸</button>
+                                </div>
+                            }
+                        </div>
+                        <div class="room-notes">
+                            <div>@Texts.RoomOwnOutfitNote</div>
+                            <div data-note="follow-host">@Texts.RoomFollowHostNote</div>
+                            <div>@Texts.RoomSampleNote @Texts.RoomRefreshNote</div>
+                        </div>
+                    </div>
+                    <div class="room-right">
+                        <b class="demo-title">演示控制</b>
+                        <div class="demo-grid">
+                            <button class="btn small" data-demo="add" @onclick="() => RoomOp(Session.AddFriend)">添加模拟好友</button>
+                            <button class="btn small" data-demo="remove" @onclick="() => RoomOp(Session.RemoveFriend)">移除模拟好友</button>
+                            <button class="btn small" data-demo="act" disabled="@(!SelectedSim)" @onclick="Session.FriendActAsync">模拟动作</button>
+                            <button class="btn small" data-demo="catch" disabled="@(!SelectedSim)" @onclick="Session.FriendCatchAsync">模拟收获</button>
+                            <button class="btn small" data-demo="drop" disabled="@(Session.SelectedMemberId == null)" @onclick="() => RoomOp(Session.Disconnect)">模拟断线</button>
+                            <button class="btn small" data-demo="rejoin" disabled="@(!Session.CanRejoinDemo)" @onclick="() => RoomOp(Session.RejoinDemo)">模拟重新加入</button>
+                            <button class="btn small" data-demo="host-leave" disabled="@(room.Migrating || Session.IsHost)" @onclick="() => RoomOp(Session.HostLeave)">模拟房主离开</button>
+                            <button class="btn small" data-demo="migrate-ok" disabled="@(!room.Migrating)" @onclick="() => RoomOp(Session.MigrationSucceed)">模拟迁移成功</button>
+                            <button class="btn small" data-demo="migrate-fail" disabled="@(!room.Migrating)" @onclick="() => RoomOp(Session.MigrationFail)">模拟迁移失败</button>
+                        </div>
+                        @if (!Session.IsHost && !room.Migrating)
+                        {
+                            @* 别人当房主时让房主切图（全房一起去）；地图名沿用地图页的 *@
+                            <div class="demo-maps" title="@Texts.RoomHostMapHelp">
+                                @foreach (var map in Pet.Maps.All)
+                                {
+                                    <button class="btn small @(map.Id == room.MapId ? "lime" : "")" data-demo-map="@map.Id" disabled="@(map.Id == room.MapId)" @onclick="() => RoomOp(() => Session.SimHostSwitchMap(map.Id))">@map.PlaceholderName</button>
+                                }
+                            </div>
+                        }
+                        <div class="room-notes">
+                            <div>@Texts.FriendCatchNote</div>
+                            <div>@Texts.FriendSoundNote</div>
+                            <div>@Texts.TankShareNote</div>
+                        </div>
+                        <div class="room-actions">
+                            <button class="btn purple leave" @onclick="() => RoomOp(Session.LeaveRoom)">离开房间</button>
+                            <button class="btn end" @onclick="() => RoomOp(Session.EndSimulation)">结束模拟</button>
+                        </div>
+                    </div>
+                </div>
+            }
         </div>
         break;
+}
+
+@foreach (var (fc, left, top) in FriendCardLayout())
+{
+    @* 好友收获卡片：冒在那位好友头上，不接指针、不开面板，盖在面板上面也不挡操作（01 §4.6） *@
+    <div class="friend-card solid" data-member="@fc.MemberId" data-count="@fc.Fish.Count" data-species="@fc.Latest.SpeciesId" data-len="@fc.Latest.LengthMm"
+         style="@FormattableString.Invariant($"left:{left:0.#}px;top:{top:0.#}px;width:{FriendCardWidth}px")">
+        <span class="card-head">@Texts.FriendCatchTitle(fc.Name)</span>
+        <span class="card-body">
+            <svg viewBox="-60 -40 120 80"><Fish Species="@fc.Latest.SpeciesId" Length="100" /></svg>
+            <span class="txt">
+                <span class="line1">@Texts.FriendCatchLine(fc.Latest.SpeciesId, fc.Latest.LengthMm)</span>
+                <span class="tag sim">模拟收获</span>
+            </span>
+        </span>
+    </div>
 }
 
 @if (Session.Card is { } card && Pet.State.Panel == Panel.None)
@@ -507,14 +660,69 @@
 
     private Task SwitchMode(FishingMode m)
     {
-        Pet.SwitchMode(m);
+        Session.SwitchMode(m);
         return OnChanged.InvokeAsync();
     }
 
     private Task SelectMap(string id)
     {
-        Pet.SelectMap(id);
+        Session.SelectMap(id);
         return OnChanged.InvokeAsync();
+    }
+
+    // ---- 房间 ----
+
+    private bool SelectedSim => Session.SelectedMemberId is { } id && Session.Room?.Find(id) is { IsSimulated: true };
+
+    /// <summary>成员的外观：本人实时读自己的装备，模拟成员用样本（Q20）。</summary>
+    private (string Character, string Rod, string Glove) Outfit(RoomMember m) => m.IsSelf
+        ? (Equipped(SkinCategory.Character), Equipped(SkinCategory.Rod), Equipped(SkinCategory.Glove))
+        : (m.Character, m.Rod, m.Glove);
+
+    private static string ViewStateText(TankViewState? state) => state switch
+    {
+        TankViewState.NotSet => Texts.TankNotSet,
+        TankViewState.Empty => Texts.FriendTankEmpty,
+        TankViewState.Gone => Texts.TankGone,
+        _ => Texts.TankExpired,
+    };
+
+    /// <summary>房间操作都是管理输入（01 §5），做完照常存小窗偏好（地图、落点可能被房间改了）。</summary>
+    private Task RoomOp(Action op)
+    {
+        op();
+        return OnChanged.InvokeAsync();
+    }
+
+    private async Task RoomRejoin()
+    {
+        await Session.RejoinAsync();
+        await OnChanged.InvokeAsync();
+    }
+
+    private const double FriendCardWidth = 360, FriendCardHeight = 160;
+
+    /// <summary>
+    /// 好友卡片的位置：各自对准自己那只熊的头顶；挨得近的往两边让开、不互相盖住，整组再挪回到平均对准，夹在画面里。
+    /// </summary>
+    private List<(FriendCard Card, double Left, double Top)> FriendCardLayout()
+    {
+        var room = Session.Room;
+        if (room == null || Pet.State.Collapsed) return new();
+        var cards = Session.FriendCards
+            .Select(c => (Card: c, Spot: room.Find(c.MemberId)?.Spot))
+            .Where(t => t.Spot.HasValue)
+            .OrderBy(t => t.Spot!.Value.X)
+            .ToList();
+        if (cards.Count == 0) return new();
+        var want = cards.Select(t => t.Spot!.Value.X - FriendCardWidth / 2).ToList();
+        var left = new List<double>(want);
+        for (int i = 1; i < left.Count; i++) left[i] = Math.Max(left[i], left[i - 1] + FriendCardWidth + 10);
+        double shift = want.Zip(left, (w, l) => w - l).Average();
+        shift = Math.Max(shift, 14 - left[0]);
+        shift = Math.Min(shift, SceneCanvas.Width - 14 - FriendCardWidth - left[^1]);
+        return cards.Select((t, i) => (t.Card, left[i] + shift,
+            Math.Clamp(t.Spot!.Value.Y - 330 - FriendCardHeight, 96, 528 - 20 - FriendCardHeight))).ToList();
     }
 
     private Task SetPassthrough(bool on)

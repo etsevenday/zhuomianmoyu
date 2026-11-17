@@ -32,11 +32,38 @@ window.moyuPlay = (() => {
     acts++;
     const pet = document.getElementById('pet');
     if (pet) pet.dataset.acts = String(acts);
-    const bear = document.querySelector('#pet svg.scene g.bear');
+    replay(document.querySelector('#pet svg.scene g.bear[data-hit="character"]'));
+  }
+
+  function replay(bear) {
     if (!bear) return;
     bear.classList.remove('act');
     void bear.getBoundingClientRect();
     bear.classList.add('act');
+  }
+
+  // 好友收获的提示音（同图房间 01 §4.6）：一声短促的两音，克制。静音、收起由 .NET 判定后才调用。
+  // 占位音色，等正式音效替换。浏览器没给声音权限（页面还没被点过）时静默失败。
+  let audio = null;
+  let chimes = 0;
+  function chime() {
+    chimes++;
+    try {
+      audio = audio || new AudioContext();
+      const t = audio.currentTime;
+      [[880, 0], [1175, 0.09]].forEach(([freq, at]) => {
+        const osc = audio.createOscillator();
+        const gain = audio.createGain();
+        osc.type = 'sine';
+        osc.frequency.value = freq;
+        gain.gain.setValueAtTime(0.0001, t + at);
+        gain.gain.exponentialRampToValueAtTime(0.06, t + at + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.0001, t + at + 0.25);
+        osc.connect(gain).connect(audio.destination);
+        osc.start(t + at);
+        osc.stop(t + at + 0.3);
+      });
+    } catch { }
   }
 
   function onKeyDown(e) {
@@ -156,6 +183,8 @@ window.moyuPlay = (() => {
     save,
     acquireWriter,
     act,
+    friendAct: id => replay(document.querySelector(`#pet svg.scene g.friend[data-member="${id}"] g.bear`)),
+    chime,
     now: () => Date.now(),
     // 新档的随机上下文：64 位，十进制字符串交给 .NET（JS 数字装不下 64 位整数）
     newSeed() {
@@ -173,10 +202,16 @@ window.moyuPlay = (() => {
         // 手竿计时：把页面看到的"现在"往后拨，再立刻检查一次
         skew: ms => ref.invokeMethodAsync('DevSkew', ms),
         poleTick: () => ref.invokeMethodAsync('DevPoleTick'),
+        // 同图房间：把上一条好友收获消息原样重发一次、再发一条旧代次的（模拟网络重复和迟到），返回被接受的条数
+        roomReplay: () => ref.invokeMethodAsync('DevRoomReplay'),
+        // 同图房间：界面上这时点不到的演示（收起时让好友收获、查看鱼缸时让对方断线或结束模拟）：catch / drop / end
+        room: (action, id) => ref.invokeMethodAsync('DevRoom', action, id ?? null),
       };
     },
     get failingSaves() { return failSaves; },
     // 页面收到并被接受的工作输入次数（小熊动作次数），收起时 #pet 不在也照样记
     get acts() { return acts; },
+    // 好友收获提示音响过几次（验收用）
+    get chimes() { return chimes; },
   };
 })();

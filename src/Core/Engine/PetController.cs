@@ -113,6 +113,17 @@ namespace Moyu.Core.Engine
             return result;
         }
 
+        /// <summary>
+        /// 在同图房间里，地图和落点由房间确认（房主端统一确认，同图房间 01 §4.1），这里只照抄结果；
+        /// 本人单独时仍走上面的 SelectMap、SwitchMode、ClickScene。
+        /// </summary>
+        public void ApplyRoomPlacement(string mapId, FishingMode mode, ScenePoint? spot)
+        {
+            State.MapId = Maps.Find(mapId)?.Id ?? State.MapId;
+            State.Mode = mode;
+            State.Spot = spot;
+        }
+
         private bool SpotValid(ScenePoint spot) =>
             _planner.TryPlace(CurrentMap, State.Mode, spot, Enumerable.Empty<ScenePoint>()) == PlaceResult.Placed;
 

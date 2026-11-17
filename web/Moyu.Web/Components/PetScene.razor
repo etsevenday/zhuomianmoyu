@@ -1,6 +1,7 @@
 @* 小窗场景（1600×900 画布）。天空不画：真透明（DEC-04）。
    命中：岸=shore（单击选位），水=water（按住拖窗/摸鱼时单击选位），角色=character（按住拖窗）；
-   植物、荷叶、竿线等装饰不接指针，点到它们等于点到下面的岸/水或透明处（01 §4）。 *@
+   植物、荷叶、竿线等装饰不接指针，点到它们等于点到下面的岸/水或透明处（01 §4）。
+   同图房间里：场景主题和底层鱼缸跟房主（Q20），好友的熊也不接指针，点到它们等于点到下面的岸（09 §5）。 *@
 <svg class="scene" viewBox="0 0 1600 900" xmlns="http://www.w3.org/2000/svg" data-scene="@SceneSkin">
     @* 设为背景的鱼缸：游戏里最底下的一层，就在原 1600×900 画幅里（03 §3、B1 Q11 答复）。
        缸框沿画幅边界向内画、玻璃不填色（透明）；鱼裁在缸里游；岸、水、装饰、小熊、卡片和底栏都盖在它上面。
@@ -9,7 +10,7 @@
     {
         var bg = BackgroundFish;
         var bgScale = BackgroundScale;
-        <g class="bg-tank nohit" data-tank="@BackgroundTank">
+        <g class="bg-tank nohit" data-tank="@BackgroundTank" data-owner="@Session.ShownTankOwner">
             <defs>
                 <clipPath id="bg-tank-clip"><rect x="@TankInset" y="@TankInset" width="@(SceneCanvas.Width - 2 * TankInset)" height="@(SceneCanvas.Height - 2 * TankInset)" rx="44" /></clipPath>
             </defs>
@@ -72,9 +73,45 @@
 
     <SceneDecor Skin="@SceneSkin" />
 
+    @if (Session.Room is { } room)
+    {
+        @foreach (var m in room.Members.Where(m => !m.IsSelf && m.Spot.HasValue))
+        {
+            @* 好友各穿各的（Q20）；一直有个轻微的待机起伏，收到动作或收获时再播一下短动作 *@
+            <g class="friend nohit" data-member="@m.Id" style="animation-delay:-@(m.JoinOrder * 0.7 % 2.6)s">
+                <Bear Preview Mode="m.Mode" Spot="m.Spot!.Value" WaterColor="@P.Water" Character="@m.Character" Rod="@m.Rod" Glove="@m.Glove" />
+            </g>
+        }
+    }
+
     @if (Spot is { } spot)
     {
         <Bear Mode="Mode" Spot="spot" WaterColor="@P.Water" Character="@Equipped(SkinCategory.Character)" Rod="@Equipped(SkinCategory.Rod)" Glove="@Equipped(SkinCategory.Glove)" />
+    }
+
+    @if (Session.Room is { } r)
+    {
+        @* 头顶名字：本人写"我"，房主多一个"房主"牌（TXT-ROOM-017） *@
+        @* 同一区域里按左右顺序一高一低错开，相邻的名字牌不互相压住 *@
+        var tagged = r.Members.Where(m => m.Spot.HasValue).OrderBy(m => m.Mode.Area()).ThenBy(m => m.Spot!.Value.X).ToList();
+        @for (int i = 0; i < tagged.Count; i++)
+        {
+            var m = tagged[i];
+            var host = m.Id == r.HostId;
+            var w = NameWidth(m.Name) + (host ? 100 : 0);
+            var rank = tagged.Take(i).Count(o => o.Mode.Area() == m.Mode.Area());
+            <g class="name-tag nohit" data-member="@m.Id" data-host="@(host ? "true" : "false")" transform="translate(@F(m.Spot!.Value.X) @F(m.Spot.Value.Y - 372 - rank % 2 * 62))">
+                <rect x="@F(-w / 2)" y="-30" width="@F(w)" height="56" rx="28" class="line" stroke-width="5" />
+                <text x="@F(host ? -50 : 0)" y="12" text-anchor="middle">@m.Name</text>
+                @if (host)
+                {
+                    <g class="host-badge">
+                        <rect x="@F(w / 2 - 96)" y="-22" width="88" height="40" rx="20" />
+                        <text x="@F(w / 2 - 52)" y="9" text-anchor="middle">房主</text>
+                    </g>
+                }
+            </g>
+        }
     }
 
     @if (Session.NoRoomAt is { } at)
@@ -105,15 +142,14 @@
     };
 
     private string Equipped(SkinCategory c) => Session.Play?.EquippedId(c) ?? Session.Skins.BaseOf(c).Id;
-    private string SceneSkin => Equipped(SkinCategory.Scene);
+    private string SceneSkin => Session.ShownSceneSkin;
 
     /// <summary>缸框离画幅边界多远：框的粗描边整个落在画幅里面。</summary>
     private const double TankInset = 10;
 
-    private string? BackgroundTank => Session.Play?.Profile.BackgroundTankId;
+    private string? BackgroundTank => Session.ShownTankId;
 
-    private List<FishRecord> BackgroundFish =>
-        Session.Play is { Profile.BackgroundTankId: { } tank } play ? play.InTank(tank).ToList() : new();
+    private List<FishRecord> BackgroundFish => Session.ShownTankFish;
 
     /// <summary>
     /// 背景鱼每毫米画多少单位：缸里所有鱼共用一个比例（03 §3 允许整体适配最长那条、不能逐条归一），
@@ -126,6 +162,9 @@
     /// （再往下会被岸和水盖住，这是 03 §3 要的遮挡，但放那儿就看不见了）。
     /// </summary>
     private static (double X, double Y) SwimSpot(int i) => (220 + (i * 337) % 1160, 190 + (i * 71) % 270);
+
+    /// <summary>名字牌的宽度：按字数估，中文一个字约 34 单位。</summary>
+    private static double NameWidth(string name) => 40 + name.Length * 34;
 
     private sealed record Palette(string Water, string Shore, string Bush);
 
