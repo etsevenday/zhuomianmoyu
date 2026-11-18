@@ -1176,3 +1176,10 @@ html.pc .boot { color: transparent; }
 
 /* 收藏室"更多鱼缸尚未开放。"：字和边框之间留白 */
 .more-tanks { padding: 0 20px; }
+
+/* ---------- B9 联机房间：在线好友列表 ---------- */
+.room .tag.net { background: #d7ecff; }
+.room .friend-list { display: flex; flex-direction: column; gap: 8px; margin: 8px 0 12px; max-height: 300px; overflow-y: auto; }
+.room .friend-row { display: grid; grid-template-columns: 1fr auto auto; align-items: center; gap: 12px; padding: 6px 10px; border-radius: 12px; background: rgba(255, 255, 255, .6); font-size: 26px; }
+.room .friend-row .nm { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.room .friend-row .state { font-size: 22px; color: #5b6b62; white-space: nowrap; }

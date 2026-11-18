@@ -25,7 +25,7 @@ public sealed record TankView(string Name, TankViewState? State, TankSnapshot Ta
 /// </summary>
 public sealed partial class PetSession
 {
-    public const string SelfId = "me";
+    private const string SimSelfId = "me";
     /// <summary>模拟"重新加入"等多久才有结果：只是让"正在重新加入房间…"看得见。</summary>
     private const int RejoinMs = 600;
     /// <summary>几位好友挨得很近地收获时只响一声（01 §4.6 允许合并声音）。</summary>
@@ -108,7 +108,14 @@ public sealed partial class PetSession
     {
         if (Room == null) return;
         var map = Room.MapId;
-        Room.Remove(SelfId);
+        if (Link != null)
+        {
+            Link.Leave();
+            _ = NetProcessAsync();
+            Link = null;
+            NetStatus = null;
+        }
+        else Room.Remove(SelfId);
         ToSolo(null, false);
         Say(Texts.RoomLeft(MapName(map)));
     }
@@ -231,6 +238,11 @@ public sealed partial class PetSession
     public async Task RejoinAsync()
     {
         if (!CanRejoin || Rejoining) return;
+        if (NetEnabled)
+        {
+            await NetRejoinAsync();
+            return;
+        }
         Rejoining = true;
         CanRejoin = false;
         RoomStatus = Texts.RoomRejoining;
@@ -271,8 +283,9 @@ public sealed partial class PetSession
             return;
         }
         Pet.ClosePanel();
-        if (Room.SetMode(SelfId, mode) == RoomResult.Migrating) Say(Texts.RoomMigratingLocked);
-        SyncSelf();
+        if ((Link?.SetMode(mode) ?? Room.SetMode(SelfId, mode)) == RoomResult.Migrating) Say(Texts.RoomMigratingLocked);
+        if (Link != null) _ = NetProcessAsync();
+        else SyncSelf();
     }
 
     public void SelectMap(string mapId)
@@ -282,16 +295,25 @@ public sealed partial class PetSession
             Pet.SelectMap(mapId);
             return;
         }
-        var r = Room.SwitchMap(SelfId, mapId);
+        var r = Link?.SwitchMap(mapId) ?? Room.SwitchMap(SelfId, mapId);
         if (r == RoomResult.Migrating) Say(Texts.RoomMigratingLocked);
         else if (r == RoomResult.NotHost) Say(Texts.RoomHostOnlyMap);
-        SyncSelf();
+        if (Link != null) _ = NetProcessAsync();
+        else SyncSelf();
     }
 
     /// <summary>单击场景选位。房间里要避开其他成员的落点（09 §4.3）；迁移中不确认、提示一下，不冒"放不下"。</summary>
     public PlaceResult ClickScene(ScenePoint point)
     {
         if (Room == null) return Pet.ClickScene(point);
+        if (Link != null)
+        {
+            // 联机：房主当场定，成员等房主回（结果回来时"放不下"由 ShowNoRoom 显示）
+            var (lr, lp) = Link.Place(point);
+            if (lr == RoomResult.Migrating) Say(Texts.RoomMigratingLocked);
+            _ = NetProcessAsync();
+            return lp ?? PlaceResult.NotInArea;
+        }
         var (r, place) = Room.Place(SelfId, point);
         if (r == RoomResult.Migrating)
         {
@@ -348,8 +370,14 @@ public sealed partial class PetSession
     private async Task<bool> DeliverCatchAsync(string memberId, string eventId, int epoch, string speciesId, int mm)
     {
         if (Room == null || !Room.AcceptCatch(memberId, eventId, epoch)) return false;
-        if (Pet.State.Collapsed || Pet.State.Closed) return true;
-        var m = Room.Find(memberId)!;
+        await ShowFriendCatchAsync(Room.Find(memberId)!, speciesId, mm);
+        return true;
+    }
+
+    /// <summary>演一条已被房间接受的好友收获：动作、卡片、提示音。收起或关闭时不演，之后也不补。</summary>
+    private async Task ShowFriendCatchAsync(RoomMember m, string speciesId, int mm)
+    {
+        if (Pet.State.Collapsed || Pet.State.Closed) return;
         if (!_friendCards.TryGetValue(m.Id, out var card)) _friendCards[m.Id] = card = new FriendCard { MemberId = m.Id, Name = m.Name };
         card.Fish.Add((speciesId, mm));
         card.Timer?.Cancel();
@@ -367,7 +395,22 @@ public sealed partial class PetSession
             _lastChimeAt = Now;
             await _js.InvokeVoidAsync("moyuPlay.chime");
         }
-        return true;
+    }
+
+    private CancellationTokenSource? _noRoomCts;
+
+    /// <summary>"放不下"的标记显示 1.5 秒（联机时选位结果晚到，从这里显示；单机和模拟房间在 FakeDesktop 里当场显示）。</summary>
+    private void ShowNoRoom(ScenePoint point)
+    {
+        _noRoomCts?.Cancel();
+        var cts = _noRoomCts = new CancellationTokenSource();
+        NoRoomAt = point;
+        _ = Later(1500, cts.Token, () =>
+        {
+            NoRoomAt = null;
+            Notify();
+            return Task.CompletedTask;
+        });
     }
 
     private void Depart(RoomMember m)
@@ -410,6 +453,7 @@ public sealed partial class PetSession
         _simCount = 0;
         _viewingId = null;
         _viewExpired = false;
+        NetStatus = null;
     }
 
     /// <summary>房间确认的地图、模式、落点抄回本人；地图变了提示一句（TXT-ROOM-021）。</summary>

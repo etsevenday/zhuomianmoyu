@@ -121,8 +121,10 @@ export async function runBatch({ batch, helpers, run, defaultUrl = 'https://etse
     return t;
   }
 
-  async function openTab(url) {
-    const { targetId } = await send('Target.createTarget', { url: 'about:blank' });
+  /** 开一个标签页；isolated 为 true 时放进一个新的浏览器上下文（存档、连接都和别的页分开，B9 当另一个人用）。 */
+  async function openTab(url, { isolated = false } = {}) {
+    const ctx = isolated ? await send('Target.createBrowserContext', { disposeOnDetach: true }) : null;
+    const { targetId } = await send('Target.createTarget', ctx ? { url: 'about:blank', browserContextId: ctx.browserContextId } : { url: 'about:blank' });
     const { sessionId } = await send('Target.attachToTarget', { targetId, flatten: true });
     const t = tab(sessionId);
     t.targetId = targetId;

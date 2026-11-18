@@ -151,6 +151,7 @@
         _ref = DotNetObjectReference.Create(this);
         await JS.InvokeVoidAsync("moyuPet.init", _ref, _desktop);
         await JS.InvokeVoidAsync("moyuPlay.init", _ref);
+        await Session.NetInitAsync(_ref);
         _dev = await JS.InvokeAsync<bool>("moyuPet.isDev");
         if (!_dev) return;
         await JS.InvokeVoidAsync("moyuPlay.enableDev", _ref);
@@ -202,6 +203,11 @@
 
     [JSInvokable]
     public Task OnWriterGranted() => Session.OnWriterGrantedAsync();
+
+    // ---- 联机（B9，js/net.js） ----
+
+    [JSInvokable]
+    public Task OnNet(string json) => Session.OnNetAsync(json);
 
     // ---- 开发入口（?dev=1，window.moyuDev） ----
 

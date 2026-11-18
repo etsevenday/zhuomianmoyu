@@ -58,7 +58,7 @@ namespace Moyu.Core.Rooms
     public sealed class RoomMember
     {
         public string Id { get; }
-        public string Name { get; }
+        public string Name { get; internal set; }
         public bool IsSelf { get; }
         public bool IsSimulated { get; }
         /// <summary>加入次序，迁移时按它选新房主（加入最早的先接）。重新加入算新加入。</summary>
@@ -80,6 +80,39 @@ namespace Moyu.Core.Rooms
             IsSelf = isSelf;
             IsSimulated = isSimulated;
             Mode = mode;
+        }
+    }
+
+    /// <summary>房间的公共状态（B9 联机快照）：房主写、别人照着改镜像。只有展示和选位要用的，不带个人资产。</summary>
+    public sealed class RoomSnapshot
+    {
+        public sealed class Entry
+        {
+            public string Id { get; }
+            public int JoinOrder { get; }
+            public FishingMode Mode { get; }
+            public ScenePoint? Spot { get; }
+
+            public Entry(string id, int joinOrder, FishingMode mode, ScenePoint? spot)
+            {
+                Id = id;
+                JoinOrder = joinOrder;
+                Mode = mode;
+                Spot = spot;
+            }
+        }
+
+        public int Epoch { get; }
+        public string? HostId { get; }
+        public string MapId { get; }
+        public IReadOnlyList<Entry> Members { get; }
+
+        public RoomSnapshot(int epoch, string? hostId, string mapId, IEnumerable<Entry> members)
+        {
+            Epoch = epoch;
+            HostId = hostId;
+            MapId = mapId;
+            Members = members.ToList();
         }
     }
 
@@ -179,12 +212,16 @@ namespace Moyu.Core.Rooms
             return RoomResult.Ok;
         }
 
-        /// <summary>迁移成功：加入最早的有效成员接任房主，代次加 1；地图和各人落点都不动。</summary>
-        public RoomMember? CompleteMigration()
+        /// <summary>
+        /// 迁移成功，代次加 1；地图和各人落点都不动。新房主由外部指定（PC 是 Steam 交出的房间所有者，NET-EVAL-001 §4），
+        /// 指定的人不在房间里就不接任、仍在迁移中；不指定时加入最早的有效成员接任（网页模拟）。
+        /// </summary>
+        public RoomMember? CompleteMigration(string? hostId = null)
         {
             if (!Migrating) return null;
             // Stryker disable once Linq : 迁移中一定还有成员（最后一人离开时房间直接结束），First 和 FirstOrDefault 结果一样
-            var next = _members.OrderBy(m => m.JoinOrder).First();
+            var next = hostId == null ? _members.OrderBy(m => m.JoinOrder).First() : Find(hostId);
+            if (next == null) return null;
             HostId = next.Id;
             Epoch++;
             Migrating = false;
@@ -263,6 +300,38 @@ namespace Moyu.Core.Rooms
             var tank = member.Tank;
             if (tank.TankId == null) return (TankViewState.NotSet, tank);
             return (tank.Fish.Count == 0 ? TankViewState.Empty : TankViewState.Fish, tank);
+        }
+
+        // ---- 联机：房主发快照，别人按快照建镜像（B9） ----
+
+        /// <summary>空镜像：等第一份快照来了才有房主、成员和地图。</summary>
+        public static Room Mirror(MapCatalog maps, RoomKind kind) => new Room(maps, kind, maps.Default.Id);
+
+        /// <summary>房主端当前的公共状态：代次、房主、地图、每人的加入次序、模式和落点。</summary>
+        public RoomSnapshot Snapshot() => new RoomSnapshot(Epoch, HostId, MapId,
+            _members.Select(m => new RoomSnapshot.Entry(m.Id, m.JoinOrder, m.Mode, m.Spot)));
+
+        /// <summary>
+        /// 按快照改镜像：成员按快照增删（还在的沿用原对象，名字、外观、展示缸不丢），代次、房主、地图照抄，迁移结束。
+        /// newMember 给快照里新出现的人建成员对象。认不认这份快照由调用方按代次和修订判断。
+        /// </summary>
+        public void Apply(RoomSnapshot snap, System.Func<string, RoomMember> newMember)
+        {
+            var old = _members.ToDictionary(m => m.Id);
+            _members.Clear();
+            foreach (var e in snap.Members.OrderBy(e => e.JoinOrder))
+            {
+                var m = old.TryGetValue(e.Id, out var had) ? had : newMember(e.Id);
+                m.JoinOrder = e.JoinOrder;
+                m.Mode = e.Mode;
+                m.Spot = e.Spot;
+                _members.Add(m);
+            }
+            _nextJoin = _members.Select(m => m.JoinOrder + 1).DefaultIfEmpty(0).Max();
+            Epoch = snap.Epoch;
+            HostId = snap.HostId;
+            MapId = _maps.Find(snap.MapId)?.Id ?? MapId;
+            Migrating = false;
         }
 
         private void Enter(RoomMember member)

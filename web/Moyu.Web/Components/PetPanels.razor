@@ -442,6 +442,28 @@
                     <div class="panel-actions"><button class="btn back" @onclick="Session.CloseTankView">房间</button></div>
                 </div>
             }
+            else if (Session.Room is null && Session.NetEnabled)
+            {
+                @* 联机（B9 本机回环，B10 换 Steam）：建房；进别人的房由 Steam 的"接受邀请"进来 *@
+                <div class="room-none">
+                    <div class="none-title" data-stat="room-none">@Texts.NetCreate</div>
+                    @if (Session.NetStatus is { } ns)
+                    {
+                        <div class="room-status" data-stat="net-status">@ns</div>
+                    }
+                    @if (Session.RoomStatus is { } status)
+                    {
+                        <div class="room-status" data-stat="room-status">@status</div>
+                    }
+                </div>
+                <div class="panel-actions">
+                    @if (Session.CanRejoin || Session.Rejoining)
+                    {
+                        <button class="btn purple rejoin" disabled="@Session.Rejoining" @onclick="RoomRejoin">重新加入</button>
+                    }
+                    <button class="btn lime create" data-net="create" disabled="@(!Session.NetConnected || Session.NetBusy || Session.Rejoining)" @onclick="Session.NetCreateAsync">@Texts.NetCreate</button>
+                </div>
+            }
             else if (Session.Room is not { } room)
             {
                 @* 没进房间：只有本机模拟的入口；网页不给真实邀请（TXT-ROOM-002、012—014） *@
@@ -471,13 +493,24 @@
                 <div class="room-main">
                     <div class="room-left">
                         <div class="room-info">
-                            <span class="tag sim" data-stat="room-kind">本机模拟</span>
+                            @if (room.Kind == RoomKind.Real)
+                            {
+                                <span class="tag net" data-stat="room-kind" data-kind="Real">联机测试</span>
+                            }
+                            else
+                            {
+                                <span class="tag sim" data-stat="room-kind" data-kind="Simulated">本机模拟</span>
+                            }
                             <span class="count" data-stat="room-count" data-count="@room.Members.Count">@Texts.RoomCountFull(room.Members.Count)</span>
                             <span class="map" data-stat="room-map" data-map="@room.MapId">@Texts.RoomMap(Session.MapName(room.MapId))</span>
                         </div>
                         @if (room.Migrating)
                         {
                             <div class="room-status" data-stat="room-migrating">@Texts.RoomMigrating</div>
+                        }
+                        else if (room.Kind == RoomKind.Real && NetLine(room) is { } nl)
+                        {
+                            <div class="room-status" data-stat="net-status">@nl</div>
                         }
                         <div class="member-list">
                             @foreach (var m in room.Members)
@@ -503,9 +536,50 @@
                         <div class="room-notes">
                             <div>@Texts.RoomOwnOutfitNote</div>
                             <div data-note="follow-host">@Texts.RoomFollowHostNote</div>
-                            <div>@Texts.RoomSampleNote @Texts.RoomRefreshNote</div>
+                            @if (room.Kind == RoomKind.Simulated)
+                            {
+                                <div>@Texts.RoomSampleNote @Texts.RoomRefreshNote</div>
+                            }
                         </div>
                     </div>
+                    @if (room.Kind == RoomKind.Real)
+                    {
+                        @* 在线好友和逐人邀请（Q27）：名单读到之前不说"没有在线好友"（TXT-ROOM-066—071） *@
+                        <div class="room-right">
+                            <b class="demo-title">@Texts.NetFriendsTitle</b>
+                            @if (Session.NetFriends is not { } friends)
+                            {
+                                <div class="hint" data-stat="friends-loading">@Texts.Processing</div>
+                            }
+                            else if (friends.Count == 0)
+                            {
+                                <div class="hint" data-stat="friends-empty">@Texts.NetNoFriends</div>
+                            }
+                            else
+                            {
+                                <div class="friend-list">
+                                    @foreach (var f in friends)
+                                    {
+                                        var inRoom = room.Find(f.Id) != null;
+                                        <div class="friend-row" data-friend="@f.Name" data-state="@(inRoom ? "in-room" : f.Playing ? "playing" : "online")">
+                                            <b class="nm">@f.Name</b>
+                                            <span class="state">@(inRoom ? Texts.NetFriendInRoom : f.Playing ? Texts.NetFriendPlaying : Texts.NetFriendOnline)</span>
+                                            <button class="btn small invite" disabled="@inRoom" @onclick="() => Session.NetInviteAsync(f.Id)">@Texts.NetInvite</button>
+                                        </div>
+                                    }
+                                </div>
+                            }
+                            <div class="room-notes">
+                                <div>@Texts.FriendCatchNote</div>
+                                <div>@Texts.TankShareNote</div>
+                            </div>
+                            <div class="room-actions">
+                                <button class="btn purple leave" @onclick="() => RoomOp(Session.LeaveRoom)">离开房间</button>
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
                     <div class="room-right">
                         <b class="demo-title">演示控制</b>
                         <div class="demo-grid">
@@ -539,6 +613,7 @@
                             <button class="btn end" @onclick="() => RoomOp(Session.EndSimulation)">结束模拟</button>
                         </div>
                     </div>
+                    }
                 </div>
             }
         </div>
@@ -720,6 +795,10 @@
     }
 
     // ---- 房间 ----
+
+    /// <summary>联机房间里的一行状态：本人房主且只有自己时是 NetWaiting（TXT-ROOM-039），其余是最近一次的联机结果。</summary>
+    private string? NetLine(Room room) =>
+        Session.IsHost && room.Members.Count == 1 && Session.NetStatus != Texts.NetInviteSent ? Texts.NetWaiting : Session.NetStatus;
 
     private bool SelectedSim => Session.SelectedMemberId is { } id && Session.Room?.Find(id) is { IsSimulated: true };
 

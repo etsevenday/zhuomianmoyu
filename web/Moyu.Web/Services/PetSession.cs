@@ -303,6 +303,7 @@ public sealed partial class PetSession
             return true;
         }
         Apply(item);
+        NetAct();
         return true;
     }
 
@@ -384,6 +385,7 @@ public sealed partial class PetSession
         if (confirming.Count == 0) return;
         foreach (var f in confirming) _unconfirmed.Remove(f);
         ShowCard(confirming);
+        NetCatches(confirming);
     }
 
     private void Failed()

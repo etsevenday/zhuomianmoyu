@@ -185,7 +185,8 @@ await runBatch({
     await setMode('路亚');
     await setMap(1);
 
-    // ───── B3-35 静态：网页用到的 TXT-ROOM 句和定稿 04 逐字一致；PC 专属 038—048 不出现在网页代码里 ─────
+    // ───── B3-35 静态：网页用到的 TXT-ROOM 句和定稿 04 逐字一致；PC 专属 038—048 只在联机回环代码里（B9 起） ─────
+    let pcOnly = [];
     {
       const table = Object.fromEntries(COPY.split('\n').filter(l => /^\| TXT-ROOM-\d{3} \|/.test(l)).map(l => { const c = l.split('|').map(s => s.trim()); return [c[1], c[3].split(' / ')]; }));
       const norm = s => s.replace(/\{[^}]*\}(\.\{[^}]*\})?/g, '{}');
@@ -200,18 +201,22 @@ await runBatch({
         for (const f of fs.readdirSync(d, { withFileTypes: true })) {
           const fp = path.join(d, f.name);
           if (f.isDirectory()) { if (!['bin', 'obj', 'lib'].includes(f.name)) walk(fp); }
-          else if (/\.(cs|razor|js|html)$/.test(f.name)) web.push(fs.readFileSync(fp, 'utf8'));
+          else if (/\.(cs|razor|js|html)$/.test(f.name)) web.push([f.name, fs.readFileSync(fp, 'utf8')]);
         }
       })(path.join(REPO, 'web/Moyu.Web'));
-      const src = web.join('\n');
-      const pcOnly = Object.entries(table).filter(([id]) => id >= 'TXT-ROOM-038' && id <= 'TXT-ROOM-048').flatMap(([id, parts]) => parts.filter(p => !p.includes('{')).map(p => [id, p]));
-      const leaked = pcOnly.filter(([, p]) => src.includes(p));
+      const src = web.map(([, t]) => t).join('\n');
+      pcOnly = Object.entries(table).filter(([id]) => id >= 'TXT-ROOM-038' && id <= 'TXT-ROOM-048').flatMap(([id, parts]) => parts.filter(p => !p.includes('{')).map(p => [id, p]));
+      // B9 起联机回环（?net=）要用这些句子：原文只许写在 Texts.cs 的 Net 常量里，常量只许联机代码用（PetSession.Net.cs、面板的联机分支）
+      const netConsts = [...TEXTS.matchAll(/const string (Net\w+) = "([^"]*)";\s*\/\/ TXT-ROOM-0(?:3[89]|4\d)/g)].map(m => [m[1], m[2]]);
+      const leaked = pcOnly.filter(([, p]) => web.some(([f, t]) => t.includes(p) && !(f === 'Texts.cs' && netConsts.some(([, v]) => v.includes(p)))));
+      const netUsers = [...new Set(web.filter(([f, t]) => f !== 'Texts.cs' && netConsts.some(([c]) => t.includes(`Texts.${c}`))).map(([f]) => f))];
+      leaked.push(...netUsers.filter(f => !['PetSession.Net.cs', 'PetPanels.razor'].includes(f)).map(f => ['用到 Net 句的文件', f]));
       const labels = ['房间', '本机模拟', '模拟成员', '创建模拟房间', '加入模拟房间', '添加模拟好友', '移除模拟好友', '演示控制', '模拟动作', '模拟收获', '模拟断线', '模拟重新加入',
         '模拟房主离开', '模拟迁移成功', '模拟迁移失败', '结束模拟', '离开房间', '跟随房主', '重新加入', '查看鱼缸', '只读'];
       const panels = ['PetPanels.razor', 'PetScene.razor'].map(f => fs.readFileSync(path.join(REPO, 'web/Moyu.Web/Components', f), 'utf8')).join('\n');
       const missing = labels.filter(l => !panels.includes(`>${l}<`) && !panels.includes(`"${l}"`));
-      check('B3-35 Texts.cs 里 TXT-ROOM 句和定稿 04 逐字一致；按钮和标签用定稿短词；PC 专属 038—048 和"链接已复制"不出现在网页代码里',
-        used.length >= 30 && bad.length === 0 && missing.length === 0 && leaked.length === 0 && !src.includes('链接已复制'), { used: used.length, bad, missing, leaked });
+      check('B3-35 Texts.cs 里 TXT-ROOM 句和定稿 04 逐字一致；按钮和标签用定稿短词；PC 专属 038—048 只写在 Texts.cs 的 Net 常量里、只有联机代码用；没有"链接已复制"',
+        used.length >= 30 && bad.length === 0 && missing.length === 0 && leaked.length === 0 && netConsts.length >= 10 && !src.includes('链接已复制'), { used: used.length, bad, missing, leaked, netUsers });
     }
 
     // ───── B3-20 没进房间时的面板 ─────
@@ -220,8 +225,8 @@ await runBatch({
       await openPanel('房间');
       const r = await room();
       const page = await ev(`document.body.innerText`);
-      const banned = ['邀请好友', '链接已复制', '已加入房间', 'Steam连接成功', '连接成功'].filter(w => page.includes(w));
-      check('B3-20 没进房间：写"还未进入模拟房间。"、本机模拟说明、网页无真实邀请说明；只有"创建模拟房间""加入模拟房间"；页面没有邀请好友、链接已复制、已加入房间、Steam 连接成功',
+      const banned = ['邀请好友', '链接已复制', '已加入房间', 'Steam连接成功', '连接成功', ...pcOnly.map(([, p]) => p)].filter(w => page.includes(w));
+      check('B3-20 没进房间：写"还未进入模拟房间。"、本机模拟说明、网页无真实邀请说明；只有"创建模拟房间""加入模拟房间"；页面没有邀请好友、链接已复制、已加入房间、Steam 连接成功、PC 专属 038—048',
         r.none === T_.none && r.text.includes(T_.intro) && r.text.includes(T_.noInvite) && r.text.includes(T_.refresh)
         && JSON.stringify(r.buttons) === JSON.stringify(['创建模拟房间', '加入模拟房间']) && banned.length === 0 && (await total()) === t0, { r, banned });
       await closePanels();

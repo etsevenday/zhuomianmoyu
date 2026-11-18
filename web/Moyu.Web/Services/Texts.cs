@@ -242,6 +242,26 @@ public static class Texts
     public const string TankExpired = "这份展示已失效，请返回房间重新选择成员。"; // TXT-ROOM-063
     public const string FriendSoundNote = "好友收获提示音受静音开关控制；静音后仍显示动作和卡片。"; // TXT-ROOM-064
 
+    // PC 真实房间（B9 先接在本机回环上，B10 接 Steam）
+    public const string NetCreate = "创建房间"; // TXT-ROOM-038
+    public const string NetCreating = "正在创建房间…"; // TXT-ROOM-039
+    public const string NetWaiting = "等待好友加入…"; // TXT-ROOM-039
+    public const string NetInviteSent = "已发出邀请，等待好友加入。"; // TXT-ROOM-040
+    public const string NetJoining = "正在加入房间…"; // TXT-ROOM-041
+    public const string NetJoined = "已加入房间。"; // TXT-ROOM-042
+    public const string NetInviteGone = "邀请已失效，或房间已结束。"; // TXT-ROOM-043
+    public const string NetVersionMismatch = "游戏版本不一致，暂时无法加入。"; // TXT-ROOM-044
+    public const string NetCreateFailed = "创建房间失败，请重试。"; // TXT-ROOM-045
+    public const string NetJoinFailed = "加入房间失败，请重试。"; // TXT-ROOM-046
+    public const string NetRoomGone = "房间已结束，无法重新加入。"; // TXT-ROOM-048
+    public const string NetFriendsTitle = "在线Steam好友"; // TXT-ROOM-066
+    public const string NetFriendOnline = "在线"; // TXT-ROOM-067
+    public const string NetFriendPlaying = "正在玩桌面摸鱼"; // TXT-ROOM-068
+    public const string NetFriendInRoom = "已在房间里"; // TXT-ROOM-069
+    public const string NetInvite = "邀请"; // TXT-ROOM-070
+    public const string NetNoFriends = "暂时没有在线的Steam好友。"; // TXT-ROOM-071
+    public const string Processing = "正在处理，请稍候。"; // TXT-SKIN-019
+
     /// <summary>列表里的短时间。</summary>
     public static string Time(long ms) =>
         DateTimeOffset.FromUnixTimeMilliseconds(ms).ToLocalTime().ToString("M/d HH:mm");
