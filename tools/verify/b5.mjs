@@ -72,6 +72,12 @@ async function run() {
   const acts = () => p.ev('window.moyuPlay.acts');
   const groups = async prefix => Object.entries((await prof()).Groups || {}).filter(([k]) => k.toLowerCase().startsWith(prefix)).reduce((a, [, g]) => a + (g.Count ?? 0), 0);
   const text = async () => (await si.cmd(`text ${np.hwnd}`)).length;
+  /** 等记事本里的字数到 want（最多 3 秒）：计数经 Raw Input 很快就到，慢机器上记事本上屏要晚一点。 */
+  const settleText = async want => {
+    let v;
+    for (let i = 0; i < 30; i++) { v = await text(); if (v === want) return v; await sleep(100); }
+    return text();
+  };
   const demoPref = async () => (await p.T('prefs()'))?.BackgroundInput ?? null;
   /** 等计数到 want（最多 3 秒），返回实际值。 */
   const settle = async want => {
@@ -142,7 +148,7 @@ async function run() {
     await focusNotepad();
     const t0 = await inputs(), x0 = await text();
     await si.cmd(`keys ${np.hwnd} 10`);
-    const t1 = await settle(t0 + 10), x1 = await text();
+    const t1 = await settle(t0 + 10), x1 = await settleText(x0 + 10);
     check('B5-01 全新启动：后台输入默认开、采集程序起来后状态"正在采集"、浮出一次首次说明、不开面板；网页演示值没被当成真实开关；记事本按 10 次 +10',
       intro && s.input.status === 'running' && s.capture.ready && sw.on === 'true' && sw.label === TXT['TXT-PC-018'] && panels === 0
       && file?.on === true && file?.introShown === true && file?.chosen === false && demo !== true && t1 - t0 === 10 && x1 - x0 === 10,
@@ -154,7 +160,7 @@ async function run() {
     await focusNotepad();
     const t0 = await inputs(), a0 = await acts(), x0 = await text();
     await si.cmd(`keys ${np.hwnd} 100`);
-    const t1 = await settle(t0 + 100), a1 = await acts(), x1 = await text();
+    const t1 = await settle(t0 + 100), a1 = await acts(), x1 = await settleText(x0 + 100);
     check('B5-02 记事本按 100 次：计数 +100、动作 +100、记事本收到 100 个字', t1 - t0 === 100 && a1 - a0 === 100 && x1 - x0 === 100,
       { inputs: t1 - t0, acts: a1 - a0, text: x1 - x0 });
   }
@@ -162,7 +168,7 @@ async function run() {
   {
     const t0 = await inputs(), x0 = await text();
     await si.cmd(`hold ${np.hwnd} 25`);
-    const t1 = await settle(t0 + 1), x1 = await text();
+    const t1 = await settle(t0 + 1), x1 = await settleText(x0 + 25);
     check('B5-03 按住连发 25 次：计数 +1；记事本收到 25 个字', t1 - t0 === 1 && x1 - x0 === 25, { inputs: t1 - t0, text: x1 - x0 });
   }
   // B5-04 组合键
