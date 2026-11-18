@@ -38,6 +38,7 @@ web/Moyu.Core.Tests/     NUnit：第一阶段可在内核判定的验收（UI、
 web/Moyu.Web/            Blazor WebAssembly 网页壳：模拟桌面、小窗、面板；手势在 wwwroot/js/pet.js，工作输入、存档、写权在 wwwroot/js/play.js
 pc/                      PC 外壳（Electron）：src/main.js 窗口、穿透与后台输入转发，src/layout.js 窗口尺寸计算，input/ 后台输入采集程序（C#，Raw Input），build-web.mjs 把网页发布进来，pack.mjs 打试玩包
 tools/verify/            浏览器验收脚本（零依赖 Node + CDP），每批一个，对应 doc/测试用例/ 的用例表；b4.mjs 启动 Electron 测
+tools/steam-spike/       Steam 联机小实验（NET-EVAL-001 第一步，公用测试 ID 480），两台电脑各跑一份，不进游戏
 ```
 
 将来接 Unity：在 Unity 工程的 `Packages/manifest.json` 里加 `"com.moyu.core": "file:../../src/Core"`。

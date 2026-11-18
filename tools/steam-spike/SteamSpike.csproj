@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- NET-EVAL-001 第一步：Steam 小实验。用公用测试 ID 480 在两台电脑之间建房、邀请、同步、换房主，量延迟和频率。不进游戏、不在 web/Moyu.sln 里 -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <AssemblyName>SteamSpike</AssemblyName>
+    <RootNamespace>Moyu.SteamSpike</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Steamworks.NET.AnyCPU" Version="2025.162.5" />
+  </ItemGroup>
+
+</Project>
