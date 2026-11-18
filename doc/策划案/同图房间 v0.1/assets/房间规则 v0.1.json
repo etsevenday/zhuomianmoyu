@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
   "document_only": true,
-  "date": "2026-11-17",
-  "rules_version": "room_rules_0.1",
+  "date": "2026-11-18",
+  "rules_version": "room_rules_0.2",
   "scope": {
     "web_mode": "local_simulation",
     "real_web_network": false,
@@ -10,6 +10,26 @@
     "backend_account_required": false,
     "steam_friend_invites_retained_for_pc": true,
     "pc_real_network_tests_pending": true
+  },
+  "pc_steam_availability": {
+    "source": "user_explicit_Q26_A",
+    "when_not_running_or_not_logged_in": "solo_available_room_unavailable",
+    "steam_required_to_start_solo": false,
+    "preserve_personal_progress_and_assets": true,
+    "message_id": "TXT-ROOM-065",
+    "room_availability_follows_actual_steam_state": true
+  },
+  "pc_friend_invitation": {
+    "source": "user_explicit_Q27_A",
+    "entry": "in_game_room_panel_online_steam_friends",
+    "per_friend_invite_button": true,
+    "requires_steam_overlay": false,
+    "real_friends_and_states_required": true,
+    "status_priority": ["in_current_room", "playing_this_game", "online"],
+    "empty_list_requires_successful_read": true,
+    "invitation_sent_is_not_joined": true,
+    "management_actions_add_fishing_inputs": false,
+    "new_copy_ids": ["TXT-ROOM-066", "TXT-ROOM-067", "TXT-ROOM-068", "TXT-ROOM-069", "TXT-ROOM-070", "TXT-ROOM-071"]
   },
   "capacity": {
     "max_members_including_host": 4,
@@ -102,15 +122,20 @@
   },
   "copy": {
     "source": "文案交接 v0.1/04 B3房间文案定稿.md",
-    "id_count": 64,
+    "id_count": 71,
     "authorization": "user_explicit_Q22_total_control_authorship",
+    "additional_authorization": {
+      "source": "user_explicit_Q26_Q27_copy_and_push_authorization_2026_11_18",
+      "new_id_range": "TXT-ROOM-065_to_071",
+      "original_001_to_064_unchanged": true
+    },
     "implies_shioko0315_confirmation": false
   },
   "acceptance": {
     "simulation_prefix": "SIM",
     "simulation_count": 13,
     "real_pc_prefix": "NET",
-    "real_pc_count": 5,
+    "real_pc_count": 7,
     "simulation_does_not_prove_real_network": true
   }
 }
