@@ -161,13 +161,14 @@
 
     // ---- PC 外壳（B4） ----
 
-    /// <summary>渲染完把收起、置顶、穿透交给外壳；点了关闭就先存档再退出程序（01 §5）。</summary>
+    /// <summary>渲染完把收起、置顶、穿透交给外壳；点了关闭就先停后台输入、存档，再退出程序（01 §5，PC 输入 §4.3）。</summary>
     private async Task PcSyncAsync()
     {
         if (Pet.State.Closed)
         {
             if (_quitting) return;
             _quitting = true;
+            await JS.InvokeVoidAsync("moyuPet.pcQuitting");
             await Session.CommitPrefsAsync();
             await Session.SaveNowAsync();
             await JS.InvokeVoidAsync("moyuPet.pcQuit");
@@ -194,6 +195,10 @@
 
     [JSInvokable]
     public bool OnWorkInput() => Session.OnWorkInput();
+
+    /// <summary>PC 后台输入的真实开关和状态（外壳推来）。</summary>
+    [JSInvokable]
+    public bool OnPcInput(bool on, string status, bool intro) => Session.OnPcInput(on, status, intro);
 
     [JSInvokable]
     public Task OnWriterGranted() => Session.OnWriterGrantedAsync();

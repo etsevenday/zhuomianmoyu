@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- PC 后台输入采集程序（B5）：外壳在"后台输入"开着时启动它。不在 web/Moyu.sln 里，网页构建和 CI 不碰它 -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <AssemblyName>MoyuInput</AssemblyName>
+    <RootNamespace>Moyu.PcInput</RootNamespace>
+  </PropertyGroup>
+
+</Project>

@@ -64,8 +64,64 @@ public sealed partial class PetSession
     public bool Writer { get; private set; }
     public SaveState State { get; private set; } = SaveState.Loading;
 
-    /// <summary>在 PC 外壳（Electron）里跑：设置页不显示网页专属说明（B4，Q24 待文案）。</summary>
+    /// <summary>在 PC 外壳（Electron）里跑：设置页用 PC 的置顶、后台输入说明（B4、B5）。</summary>
     public bool Pc { get; set; }
+
+    // ---- PC 后台输入（B5，PC 输入 v0.1）：真实开关和采集状态都在外壳，这里只显示和转达玩家的操作 ----
+
+    /// <summary>PC 真实开关（和网页演示开关 Settings.BackgroundInput 分开）。</summary>
+    public bool PcInputOn { get; private set; }
+    /// <summary>off 已关闭 / starting 正在启动 / running 正在采集 / failed 启动失败 / interrupted 中断 / unsupported 不支持。</summary>
+    public string PcInputStatus { get; private set; } = "off";
+    private bool _pcInputAnnounce; // 玩家刚打开：真的跑起来了再说"已开启"
+    private bool _pcIntroShown;
+
+    /// <summary>外壳推来新状态。返回 true 表示这次显示了首次开启说明（外壳据此不再要求显示）。</summary>
+    public bool OnPcInput(bool on, string status, bool intro)
+    {
+        var was = PcInputStatus;
+        PcInputOn = on;
+        PcInputStatus = status;
+        var shown = false;
+        if (status == "running" && intro && !_pcIntroShown)
+        {
+            _pcIntroShown = shown = true;
+            _pcInputAnnounce = false;
+            Say(Texts.PcInputIntro);
+        }
+        else if (status == "running" && _pcInputAnnounce)
+        {
+            _pcInputAnnounce = false;
+            Say(Texts.PcInputTurnedOn);
+        }
+        else if (status == "failed" && was != "failed")
+        {
+            _pcInputAnnounce = false;
+            Say(Texts.PcInputFailed, error: true);
+        }
+        else if (status == "interrupted" && was == "running")
+        {
+            Say(Texts.PcInputInterrupted, error: true);
+        }
+        Notify();
+        return shown;
+    }
+
+    /// <summary>玩家在设置里点开关：交给外壳起停，记成真实选择。</summary>
+    public async Task SetPcInputAsync(bool on)
+    {
+        PcInputOn = on;
+        _pcInputAnnounce = on;
+        if (!on) Say(Texts.PcInputTurnedOff);
+        await _js.InvokeVoidAsync("moyuPet.pcSetInput", on);
+        Notify();
+    }
+
+    public Task RetryPcInputAsync()
+    {
+        _pcInputAnnounce = true;
+        return _js.InvokeVoidAsync("moyuPet.pcRetryInput").AsTask();
+    }
     public string? LoadError { get; private set; }
 
     /// <summary>能不能计数和交易：拿到写权、读档正常、初始档已经存进去（03 §5）。</summary>

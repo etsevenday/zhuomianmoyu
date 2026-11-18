@@ -114,6 +114,29 @@ public static class Texts
     public const string FakeDesktopNote = "这是网页内的模拟桌面，不会控制真实系统桌面。"; // TXT-SET-010
     public const string ArtPlaceholder = "当前美术为临时素材，正式素材将逐步替换。"; // TXT-SET-013
 
+    // ---- PC 置顶与后台输入（文案交接 05，只在 PC 版显示；网页仍用上面的 TXT-SET-004/005） ----
+
+    public const string PcTopmostHelp = "开启后，游戏小窗会保持在其他普通窗口上方。"; // TXT-PC-003
+    public const string PcInputScope = "开启后台输入后，会统计游戏界面以外的键盘按下和鼠标点击次数，用于角色动作和捕鱼进度。"; // TXT-PC-004
+    public const string PcInputPrivacy = "只统计次数，不保存键名、输入文字、点击位置或软件名称。"; // TXT-PC-005
+    public const string PcInputExcluded = "游戏菜单、选位、拖窗、缩放和收起恢复操作不计入捕鱼次数。"; // TXT-PC-006
+    public const string PcInputIntro = "已开启后台输入，将统计游戏界面以外的按键和点击次数。可在设置中随时关闭。"; // TXT-PC-007
+    public const string PcInputTurnedOn = "后台输入已开启。"; // TXT-PC-008
+    public const string PcInputTurnedOff = "后台输入已关闭。"; // TXT-PC-009
+    public const string PcInputOffNote = "关闭后，路亚和摸鱼不再累计工作输入；已有进度保留。手竿仍按有效时间计时。"; // TXT-PC-010
+    public const string PcInputCollapsedNote = "收起或被其他窗口遮挡时，后台输入仍按开关运行。退出游戏后停止。"; // TXT-PC-011
+    public const string PcPoleNote = "手竿在收起或被遮挡时继续累计有效时间，退出停止，不补离线时间。"; // TXT-PC-012
+    public const string PcInputStarting = "正在启动后台输入…"; // TXT-PC-013
+    public const string PcInputFailed = "后台输入启动失败，当前没有采集工作输入。请重试。"; // TXT-PC-014
+    public const string PcInputUnsupported = "当前环境暂不支持后台输入，路亚和摸鱼暂不累计工作输入。"; // TXT-PC-015
+    public const string PcInputInterrupted = "后台输入已中断，请重试。"; // TXT-PC-016
+    public const string PcInputIdle = "尚未采集"; // TXT-PC-017
+    public const string PcInputRunning = "正在采集"; // TXT-PC-018
+    public const string PcInputOff = "已关闭"; // TXT-PC-019
+    public const string PcInputNoBackfill = "只有已接受并确认的输入会用于捕鱼，不会补算无法采集的时段。"; // TXT-PC-020
+    public const string PcTrialNote = "PC试玩版已接入桌面窗口；后台输入以设置中的实际状态为准。Steam好友联机尚未开放。"; // TXT-PC-022
+    public const string PcInputHelpEntry = "输入说明"; // TXT-PC-023
+
     // ---- 计数、计时与保存（定稿 §4） ----
 
     public static string TotalTitle(long n) => $"总累计 {n} 次"; // TXT-STAT-002

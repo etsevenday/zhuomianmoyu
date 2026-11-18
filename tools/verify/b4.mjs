@@ -106,10 +106,14 @@ function buildWeb() {
   if (r.status !== 0) throw new Error('网页发布失败');
 }
 
-/** 启动一次外壳；返回渲染页的 CDP 会话。 */
-async function launch({ userData, displays = ONE, port = PORT } = {}) {
+/**
+ * 启动一次外壳；返回渲染页的 CDP 会话。input：先写进数据目录的后台输入偏好（B5）。B4 只测窗口，
+ * 默认按"玩家关过"启动，免得系统层面的输入混进来；传 null 不写，用外壳自己的默认。
+ */
+async function launch({ userData, displays = ONE, port = PORT, env = {}, input = { on: false, chosen: true } } = {}) {
+  if (input) fs.writeFileSync(path.join(userData, 'input.json'), JSON.stringify({ version: 1, introShown: false, ...input }));
   const proc = spawn(ELECTRON, [PC, `--remote-debugging-port=${port}`], {
-    env: { ...process.env, MOYU_TEST: '1', MOYU_USER_DATA: userData, MOYU_FAKE_DISPLAYS: JSON.stringify(displays) },
+    env: { ...process.env, MOYU_TEST: '1', MOYU_USER_DATA: userData, MOYU_FAKE_DISPLAYS: JSON.stringify(displays), ...env },
     stdio: 'ignore',
   });
   const exited = new Promise(r => proc.once('exit', code => r(code)));
@@ -369,10 +373,12 @@ async function electronChecks() {
       await p.click(await p.T(`center(document.querySelectorAll('.setting-row [role=switch]')[2])`));
       const on1 = (await p.state()).topmost;
       const notes = await p.ev(`({ notes: [...document.querySelectorAll('.setting-note')].map(e => e.dataset.note),
-        titles: [...document.querySelectorAll('.setting-row')].filter(e => e.title).map(e => e.dataset.setting) })`);
+        titles: Object.fromEntries([...document.querySelectorAll('.setting-row')].map(e => [e.dataset.setting, e.title])) })`);
       await p.btn('更多');
-      check('B4-35 PC 设置页不显示网页专属说明（置顶、后台输入是演示开关；只统计本页面输入）', !notes.notes.includes('demo') && !notes.notes.includes('input')
-        && notes.notes.includes('help') && !notes.titles.includes('topmost') && !notes.titles.includes('background-input'), notes);
+      // PC 输入 v0.1 §5 / 文案 05 起：两行悬停提示换成 PC 原句 TXT-PC-003、004（原来 B4 是先不显示）
+      check('B4-35 PC 设置页不显示网页专属说明（置顶、后台输入是演示开关；只统计本页面输入），两行悬停提示用 PC 原句', !notes.notes.includes('demo') && !notes.notes.includes('input')
+        && notes.notes.includes('help') && notes.titles.topmost === '开启后，游戏小窗会保持在其他普通窗口上方。'
+        && notes.titles['background-input'] === '开启后台输入后，会统计游戏界面以外的键盘按下和鼠标点击次数，用于角色动作和捕鱼进度。', notes);
       check('B4-25 置顶默认开，开关切换真实置顶状态', on0 === true && off === false && on1 === true, { on0, off, on1 });
     }
 

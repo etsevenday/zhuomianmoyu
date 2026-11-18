@@ -198,7 +198,15 @@ window.moyuPet = (() => {
       document.addEventListener('pointermove', pcPointer, true);
       document.addEventListener('pointerup', pcRecheck, true);
       pc.onClosing(() => dotnet?.invokeMethodAsync('OnPcClosing'));
+      // 后台输入（B5）：外壳管真实开关和采集状态，页面只显示和转达玩家的操作
+      const toNet = s => dotnet?.invokeMethodAsync('OnPcInput', s.on, s.status, !!s.intro).then(shown => { if (shown) pc.introSeen(); });
+      pc.onInput(toNet);
+      pc.input().then(toNet);
     },
+    pcSetInput(on) { pc?.setInput(on); },
+    pcRetryInput() { pc?.retryInput(); },
+    pcIntroSeen() { pc?.introSeen(); },
+    pcQuitting() { pc?.quitting(); },
     isPc() {
       return !!pc;
     },

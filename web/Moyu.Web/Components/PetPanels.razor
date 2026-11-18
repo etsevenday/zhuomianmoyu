@@ -347,19 +347,52 @@
                     <span>静音</span>
                     <Toggle On="Pet.State.Settings.Mute" OnChange="SetMute" />
                 </div>
-                @* 网页演示开关：可以点、会记住，但不改系统置顶、不收页面外输入，也不改什么输入算数 *@
-                <div class="setting-row" data-setting="topmost" title="@DemoNote">
+                @* 网页：演示开关，可以点、会记住，但不改系统置顶、不收页面外输入。PC：置顶是真的；后台输入是外壳管的真实开关 *@
+                <div class="setting-row" data-setting="topmost" title="@(Session.Pc ? Texts.PcTopmostHelp : Texts.DemoSwitchNote)">
                     <span>置顶</span>
                     <Toggle On="Pet.State.Settings.Topmost" OnChange="SetTopmost" />
                 </div>
-                <div class="setting-row" data-setting="background-input" title="@DemoNote">
-                    <span>后台输入</span>
-                    <Toggle On="Pet.State.Settings.BackgroundInput" OnChange="SetBackgroundInput" />
-                </div>
+                @if (Session.Pc)
+                {
+                    <div class="setting-row" data-setting="background-input" title="@Texts.PcInputScope">
+                        <span class="with-status">后台输入<span class="tag input-status" data-stat="input-status" data-status="@Session.PcInputStatus">@PcInputLabel</span></span>
+                        <Toggle On="Session.PcInputOn" OnChange="Session.SetPcInputAsync" />
+                    </div>
+                }
+                else
+                {
+                    <div class="setting-row" data-setting="background-input" title="@Texts.DemoSwitchNote">
+                        <span>后台输入</span>
+                        <Toggle On="Pet.State.Settings.BackgroundInput" OnChange="SetBackgroundInput" />
+                    </div>
+                }
             </div>
             <div class="setting-notes">
-                @* PC 版里置顶是真的，输入范围也不是"本页面"：这两句网页专属说明先不显示，等 PC 版文案（Q24） *@
-                @if (!Session.Pc)
+                @if (Session.Pc)
+                {
+                    @if (PcInputProblem is { } problem)
+                    {
+                        <div class="setting-note input-problem" data-note="input-state">
+                            @problem
+                            @if (Session.PcInputStatus is "failed" or "interrupted")
+                            {
+                                <button class="btn small" data-act="retry-input" @onclick="Session.RetryPcInputAsync">重试</button>
+                            }
+                        </div>
+                    }
+                    @if (!Session.PcInputOn)
+                    {
+                        <div class="setting-note" data-note="input-off">@Texts.PcInputOffNote</div>
+                    }
+                    <button class="btn small" data-act="input-help" @onclick="() => _inputHelp = !_inputHelp">@Texts.PcInputHelpEntry</button>
+                    @if (_inputHelp)
+                    {
+                        <div class="setting-note" data-note="input-help">
+                            @Texts.PcInputScope @Texts.PcInputPrivacy @Texts.PcInputExcluded @Texts.PcInputCollapsedNote @Texts.PcPoleNote @Texts.PcInputNoBackfill @Texts.PcTrialNote
+                        </div>
+                    }
+                }
+                else
                 {
                     <div class="setting-note" data-note="demo">置顶、后台输入：@Texts.DemoSwitchNote</div>
                     <div class="setting-note" data-note="input">@Texts.InputScopeHelp</div>
@@ -549,7 +582,17 @@
 }
 
 @code {
-    private string? DemoNote => Session.Pc ? null : Texts.DemoSwitchNote;
+    // PC 后台输入：开关为开但没跑起来是"尚未采集"，只有真跑起来才是"正在采集"（TXT-PC-017—019）
+    private string PcInputLabel => !Session.PcInputOn ? Texts.PcInputOff : Session.PcInputStatus == "running" ? Texts.PcInputRunning : Texts.PcInputIdle;
+    private string? PcInputProblem => Session.PcInputOn ? Session.PcInputStatus switch
+    {
+        "starting" => Texts.PcInputStarting,
+        "failed" => Texts.PcInputFailed,
+        "interrupted" => Texts.PcInputInterrupted,
+        "unsupported" => Texts.PcInputUnsupported,
+        _ => null,
+    } : null;
+    private bool _inputHelp;
 
     [Parameter, EditorRequired] public PetSession Session { get; set; } = null!;
     [Parameter] public EventCallback OnChanged { get; set; }

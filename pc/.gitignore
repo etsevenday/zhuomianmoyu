@@ -1,1 +1,4 @@
 .web/
+.input/
+input/bin/
+input/obj/

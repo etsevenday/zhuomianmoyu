@@ -1,23 +1,29 @@
 // 桌面摸鱼 PC 外壳：透明无框窗口装网页版的 Blazor 包（界面和 C# 内核与网页同一份）。
-// 外壳只管窗口：分区穿透、拖窗、右下角缩放、收起成头像、置顶、跨屏与重启恢复（05 §6.1）、关闭即退出。
+// 外壳管窗口：分区穿透、拖窗、右下角缩放、收起成头像、置顶、跨屏与重启恢复（05 §6.1）、关闭即退出；
+// 以及后台输入（B5）："后台输入"开着时起采集程序（pc/input），把别的程序里的按下、点击一次次转给页面计数。
 // 窗口设置（显示器、相对位置、占屏比例 s）存在数据目录的 window.json，和玩法存档分开。
 //
 // 环境变量：
 //   MOYU_WEB_DIR   网页包目录（dotnet publish 出来的 wwwroot），默认 pc/.web/wwwroot（npm run build:web）
+//   MOYU_INPUT_EXE 采集程序，默认 pc/.input/MoyuInput.exe（npm run build:input）
 //   MOYU_USER_DATA 数据目录，默认系统给的
 //   MOYU_DEV=1     打开 ?dev=1 开发入口
 //   MOYU_TEST=1    验收测试模式：开发入口、window.moyuPc.test 测试入口、可换成虚构显示器
 //   MOYU_FAKE_DISPLAYS  测试模式下的虚构显示器 JSON
+//   MOYU_TEST_OS_MOUSE=1  测试模式下系统鼠标照常进窗口（B5 用系统层面的输入测，不用 CDP 拖动）
 'use strict';
 
 const { app, BrowserWindow, ipcMain, protocol, screen } = require('electron');
+const { spawn } = require('node:child_process');
 const fs = require('node:fs');
 const path = require('node:path');
 const L = require('./layout');
 
 const TEST = process.env.MOYU_TEST === '1';
 const DEV = TEST || process.env.MOYU_DEV === '1';
+const OS_MOUSE = !TEST || process.env.MOYU_TEST_OS_MOUSE === '1';
 const WEB_DIR = path.resolve(process.env.MOYU_WEB_DIR || path.join(__dirname, '..', '.web', 'wwwroot'));
+const INPUT_EXE = path.resolve(process.env.MOYU_INPUT_EXE || path.join(__dirname, '..', '.input', 'MoyuInput.exe'));
 if (process.env.MOYU_USER_DATA) app.setPath('userData', process.env.MOYU_USER_DATA);
 const SETTINGS_FILE = () => path.join(app.getPath('userData'), 'window.json');
 
@@ -163,10 +169,129 @@ function sync(state) {
 function setIgnore(on) {
   if (gesture || on === ignoring) return; // 拖动、缩放中不切，免得半路丢指针
   ignoring = on;
-  // 测试模式下系统鼠标一律不进窗口：窗口挪到测试机真实光标底下时系统会补发鼠标移动，混进 CDP 模拟的拖动。
+  // B4 测试模式下系统鼠标一律不进窗口：窗口挪到测试机真实光标底下时系统会补发鼠标移动，混进 CDP 模拟的拖动。
   // CDP 的指针事件直接送进页面，不受影响；穿透状态照样按页面要求记着（真实系统穿透见人工用例 B4-M2）
-  if (TEST) win.setIgnoreMouseEvents(true);
+  if (!OS_MOUSE) win.setIgnoreMouseEvents(true);
   else win.setIgnoreMouseEvents(on, { forward: true });
+}
+
+// ───── 后台输入（B5，PC 输入 v0.1） ─────
+// 开关是 PC 自己的真实偏好，存在数据目录的 input.json，和网页（及 B4 时）的演示开关分开：没有真实偏好时默认开（Q23②）。
+// 开着才起采集程序，关了就结束它：关着时什么都不采。采集程序只报"按键 / 点击 / 是不是落在小窗上"，
+// 落在小窗上的是管理操作，不计；其余每条立刻转给页面，页面和网页版一样每次调用一次 OnWorkInput，不合并、不限速。
+// 只有一条通道、进程内按顺序送达、不重发，所以不需要序号去重；关掉或退出时先断资格（旧进程迟到的行一律丢弃）再结束进程。
+// 状态：off 已关闭；starting 正在启动；running 正在采集；failed 启动失败；interrupted 运行中断；unsupported 不是 Windows。
+// 失败、中断都等玩家点重试，不自动反复起，也不补算没采到的时段。
+
+const INPUT_FILE = () => path.join(app.getPath('userData'), 'input.json');
+let capture = null;      // 采集程序进程
+let input = { on: true, chosen: false, introShown: false, status: 'off' };
+let introPending = false; // 首次说明要显示、页面还没确认显示过（页面订阅前就跑起来也不丢）
+const inputStats = { started: 0, keys: 0, clicks: 0, own: 0 };
+
+function readInput() {
+  try {
+    const j = JSON.parse(fs.readFileSync(INPUT_FILE(), 'utf8'));
+    if (j && typeof j.on === 'boolean') return { on: j.on, chosen: j.chosen === true, introShown: j.introShown === true };
+  } catch { }
+  return { on: true, chosen: false, introShown: false }; // 没有真实偏好：默认开
+}
+
+function writeInput() {
+  try {
+    fs.writeFileSync(INPUT_FILE(), JSON.stringify({ version: 1, on: input.on, chosen: input.chosen, introShown: input.introShown }, null, 2));
+  } catch { /* 存不下下次按默认 */ }
+}
+
+/** 把开关和真实状态告诉页面；intro：第一次默认开启、真的跑起来了，页面显示一次说明。 */
+const inputView = () => ({ on: input.on, status: input.status, intro: introPending && input.status === 'running' });
+
+function setStatus(status) {
+  input.status = status;
+  win?.webContents.send('pc:input', inputView());
+}
+
+/** 按开关起停。玩家点开关时 chosen 记成真实选择，以后重启照它。 */
+function applyInput() {
+  if (!input.on) {
+    if (capture) stopCapture();
+    setStatus('off');
+    return;
+  }
+  if (process.platform !== 'win32') { setStatus('unsupported'); return; }
+  if (!capture) startCapture();
+}
+
+function setInput(on) {
+  input.on = !!on;
+  input.chosen = true;
+  introPending = false;
+  writeInput();
+  applyInput();
+}
+
+function stopCapture() {
+  const p = capture;
+  capture = null; // 先断资格：之后到的行都不认
+  p.stdin.end();
+  p.kill();
+}
+
+function nativeHandle() {
+  const h = win.getNativeWindowHandle();
+  return (h.length >= 8 ? h.readBigUInt64LE(0) : BigInt(h.readUInt32LE(0))).toString();
+}
+
+function startCapture() {
+  setStatus('starting');
+  let p;
+  try {
+    p = spawn(INPUT_EXE, [nativeHandle()], { stdio: ['pipe', 'pipe', 'ignore'], windowsHide: true });
+  } catch {
+    setStatus('failed');
+    return;
+  }
+  capture = p;
+  inputStats.started++;
+  let buf = '';
+  p.stdout.setEncoding('utf8');
+  p.stdout.on('data', chunk => {
+    buf += chunk;
+    for (let i; (i = buf.indexOf('\n')) >= 0; buf = buf.slice(i + 1)) onCaptureLine(p, buf.slice(0, i).trim());
+  });
+  const gone = () => {
+    if (capture !== p) return; // 是外壳自己关的
+    capture = null;
+    if (!quitting) setStatus(p.ready ? 'interrupted' : 'failed');
+  };
+  p.on('error', gone);
+  p.on('exit', gone);
+}
+
+function onCaptureLine(p, line) {
+  if (capture !== p) return; // 已关掉、已退出或旧进程迟到的
+  if (line === 'ready') {
+    p.ready = true;
+    if (!input.chosen && !input.introShown) {
+      input.introShown = true;
+      introPending = true;
+      writeInput();
+    }
+    setStatus('running');
+    return;
+  }
+  const [kind, own] = line.split(' ');
+  if (kind !== 'k' && kind !== 'c') return;
+  // 点击落在小窗上、而小窗这时是穿透的：点击其实落到了下层窗口，照算
+  if (own === '1' && !(kind === 'c' && ignoring)) { inputStats.own++; return; }
+  inputStats[kind === 'k' ? 'keys' : 'clicks']++;
+  win?.webContents.send('pc:work');
+}
+
+/** 开始退出：先停止新增采集资格，再走保存退出。开关不变。 */
+function quitting_() {
+  quitting = true;
+  if (capture) stopCapture();
 }
 
 /** 显示器拔掉、分辨率或系统缩放变了：回到原屏或主屏，按 s 重算，按相对位置放回可用范围。不改玩家偏好。 */
@@ -226,14 +351,18 @@ function createWindow() {
     if (quitting) return;
     e.preventDefault();
     stats.closeRequests++;
+    quitting_();
     win.webContents.send('pc:closing');
     setTimeout(quit, 3000); // 页面没响应也别卡住
   });
   win.loadURL('moyu://app/index.html' + (DEV ? '?dev=1' : ''));
+  // 页面载完再起采集：状态要能告诉页面，首次说明也要页面在才看得到
+  input = { ...readInput(), status: 'off' };
+  win.webContents.once('did-finish-load', applyInput);
 }
 
 function quit() {
-  quitting = true;
+  quitting_();
   app.quit();
 }
 
@@ -259,6 +388,11 @@ if (!app.requestSingleInstanceLock()) {
   ipcMain.on('pc:resize-move', (_, dx, dy) => resizeMove(dx, dy));
   ipcMain.handle('pc:resize-end', (_, cancel) => resizeEnd(!!cancel));
   ipcMain.on('pc:quit', quit);
+  ipcMain.on('pc:quitting', quitting_);
+  ipcMain.handle('pc:input', inputView);
+  ipcMain.on('pc:intro-seen', () => { introPending = false; });
+  ipcMain.on('pc:set-input', (_, on) => setInput(on));
+  ipcMain.on('pc:retry-input', () => { if (input.on && !capture) applyInput(); });
 
   if (TEST) {
     ipcMain.handle('pc:test:state', () => {
@@ -269,7 +403,15 @@ if (!app.requestSingleInstanceLock()) {
         topmost: win.isAlwaysOnTop(), focused: win.isFocused(), visible: win.isVisible(),
         content: win.getContentBounds(), resizable: win.isResizable(),
         settings, settingsFile: file, userData: app.getPath('userData'), displays: displays(), stats,
+        capture: { running: !!capture, ready: !!capture?.ready, pid: capture?.pid ?? null, ...inputStats },
+        input: { ...input }, inputFile: (() => { try { return fs.readFileSync(INPUT_FILE(), 'utf8'); } catch { return null; } })(),
+        physical: screen.dipToScreenRect(win, win.getBounds()), hwnd: nativeHandle(),
       };
+    });
+    // 窗口里一点（页面 CSS 像素）在屏幕上的物理坐标：系统层面的点击要用
+    ipcMain.handle('pc:test:screen-point', (_, x, y) => {
+      const b = win.getBounds();
+      return screen.dipToScreenPoint({ x: b.x + x, y: b.y + y });
     });
     ipcMain.handle('pc:test:displays', (_, list) => { fakeDisplays = list; onDisplaysChanged(); });
     // 和真实拖动走同一套：按下、按位移移动、松手

@@ -20,7 +20,7 @@ window.moyuPlay = (() => {
   let failSaves = false;
   let acts = 0;
 
-  // PC 版窗口里收到的键鼠都是对小窗的操作；后台全局输入另批再定（02 输入玩法接口），这里一律不算工作输入
+  // PC 版窗口里收到的键鼠都是对小窗的操作，这里一律不算；别的程序里的输入由外壳的后台输入转来（B5，见 init）
   const isGame = el => !!window.moyuPc || !!(el && el.closest && el.closest(GAME_UI));
 
   function work() {
@@ -179,6 +179,8 @@ window.moyuPlay = (() => {
       document.addEventListener('pointermove', onPointerMove, true);
       document.addEventListener('pointerup', onPointerUp, true);
       document.addEventListener('pointercancel', () => { press = null; }, true);
+      // PC 版"后台输入"开着时，外壳每收到别的程序里的一次按下或点击就转来一次，和页面里的一样计
+      window.moyuPc?.onWork(work);
     },
     load,
     save,
