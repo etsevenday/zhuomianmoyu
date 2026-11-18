@@ -42,7 +42,7 @@ tools/verify/            浏览器验收脚本（零依赖 Node + CDP），每�
 
 将来接 Unity：在 Unity 工程的 `Packages/manifest.json` 里加 `"com.moyu.core": "file:../../src/Core"`。
 
-本地运行需要 .NET 8 SDK：`dotnet test web/Moyu.sln`；`dotnet run --project web/Moyu.Web --launch-profile http`（http://localhost:5188）。PC 版：`cd pc && npm install && npm run build && npm start`（`build` = 网页包 + 采集程序；采集程序要 .NET 8 运行时）（`node_modules/electron/dist` 没下来时补 `node node_modules/electron/install.js`）。浏览器验收需要 Node 22+ 和 Chrome/Edge：推送前跑 `node tools/verify/b5.mjs --release`、`b4.mjs --release`（改了打包或发布再跑 `b6.mjs --release`：打包后用包跑 b4、b5）（PC，要先 `cd pc && npm install`；b5 会开记事本发真实按键点击，跑的时候别动鼠标键盘），回归 `b3.mjs`、`b2.mjs`、`b1.mjs`、`b0.mjs`（都带 `--release`）（照 CI 发布本地 Release 包再测）；也可给开发服务器网址，不给网址就测线上。改了内核还要跑变异测试：`dotnet tool restore` 后在 `web/Moyu.Core.Tests` 里 `dotnet stryker --since:origin/main`（见测试用例准则 §5）。
+本地运行需要 .NET 8 SDK：`dotnet test web/Moyu.sln`；`dotnet run --project web/Moyu.Web --launch-profile http`（http://localhost:5188）。PC 版：`cd pc && npm install && npm run build && npm start`（`build` = 网页包 + 采集程序；采集程序要 .NET 8 运行时）（`node_modules/electron/dist` 没下来时补 `node node_modules/electron/install.js`）。浏览器验收需要 Node 22+ 和 Chrome/Edge：推送前跑 `node tools/verify/b4.mjs --release`（PC 窗口，要先 `cd pc && npm install`，不占鼠标键盘）；`b5.mjs`（后台输入，开记事本发真实按键点击）和 `b6.mjs`（打包后用包跑 b4、b5）由 CI 在 GitHub 的 Windows 机器上跑，过了才发布 PC 试玩包，本机要跑时别动鼠标键盘，回归 `b3.mjs`、`b2.mjs`、`b1.mjs`、`b0.mjs`（都带 `--release`）（照 CI 发布本地 Release 包再测）；也可给开发服务器网址，不给网址就测线上。改了内核还要跑变异测试：`dotnet tool restore` 后在 `web/Moyu.Core.Tests` 里 `dotnet stryker --since:origin/main`（见测试用例准则 §5）。
 
 ## 分工
 

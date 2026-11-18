@@ -2,6 +2,7 @@
 // 本地：pc/pack.mjs 打包；--online：下载 Releases 上 pc-latest 的包（README 里的固定地址），构建号要等于 origin/main。
 // 用资源管理器同一套解压（Shell.Application）解开，查包内容；以正常模式启动包里的 桌面摸鱼.exe（只换数据目录），
 // 看载入、构建号、采集程序自带运行时；再让 b4、b5 改测这个包（MOYU_PC_APP）。b5 发系统层面的输入，跑的时候不要动鼠标键盘。
+// --online 不重跑 b4、b5：线上的包就是 CI 发布前刚用它们测过的那个 zip。
 import { spawn, spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
@@ -51,10 +52,14 @@ async function run() {
   let zip, want;
   if (ONLINE) {
     spawnSync('git', ['fetch', 'origin', 'main', '--tags', '--force', '-q'], { cwd: REPO, stdio: 'inherit' });
-    const main = git(['rev-parse', 'origin/main']);
+    // 只改文档、工具的推送不构建，所以对的是 main 上最近一次跑成功的工作流，不是 main 的最新提交
+    const r = spawnSync('gh', ['run', 'list', '--workflow', 'pages.yml', '--branch', 'main', '--status', 'success', '-L', '1', '--json', 'headSha', '--jq', '.[0].headSha'],
+      { cwd: REPO, encoding: 'utf8' });
+    const built = r.stdout.trim();
     const tag = git(['rev-parse', 'refs/tags/pc-latest^{commit}']);
-    check('B6-07 pc-latest 标签指向 origin/main 的最新提交', tag === main, { tag, main });
-    want = main.slice(0, 7);
+    const onMain = spawnSync('git', ['merge-base', '--is-ancestor', tag, 'origin/main'], { cwd: REPO }).status === 0;
+    check('B6-07 pc-latest 标签指向 main 上最近一次跑成功的工作流的提交', !!built && tag === built && onMain, { tag, built, onMain });
+    want = built.slice(0, 7);
     zip = path.join(tmp, ZIP_NAME);
     const res = await fetch(URL_);
     if (!res.ok) throw new Error(`下载失败 ${res.status}`);
@@ -127,7 +132,8 @@ if ($p) { @{ pid = $p.ProcessId; path = $p.ExecutablePath; modules = @((Get-Proc
     await p.kill();
   }
 
-  // ── B6-04 用包跑 b4、b5 ──
+  // ── B6-04 用包跑 b4、b5 ──（线上包就是 CI 发布前刚跑过 b4、b5 的那个 zip，线上确认不重跑，不占开发机的鼠标键盘）
+  if (ONLINE) return;
   const suite = async name => {
     const dir = path.join(out, name);
     const r = await new Promise(ok => spawn(process.execPath, [path.join(REPO, 'tools/verify', `${name}.mjs`), '--release', dir],
