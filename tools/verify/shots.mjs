@@ -134,7 +134,7 @@ await runBatch({
       await shot('home-empty');
       for (const [tab, name] of [['鱼篓', 'basket-empty'], ['收藏', 'collection-empty'], ['记录', 'records-empty']]) { await btn(tab); await shot(name); await closePanel(); }
 
-      // 有鱼有币：开发入口注入；出鱼卡片要真出一条：摸鱼模式（每 200 次判定、一个周期 400 次、周期末必出）在假桌面的记事本里按，出了就停
+      // 有鱼有币：开发入口注入；出鱼卡片要真出一条：摸鱼模式（每 200 次判定一次，最晚第 2000 次保底出）在假桌面的记事本里按，出了就停
       await ev('window.moyuDev.addCoins(3000)');
       await ev('window.moyuDev.injectFish(12)');
       await click(`document.querySelector('#pet .pill.mode')`);
@@ -142,7 +142,7 @@ await runBatch({
       if (await ev(`!!document.querySelector('#pet .popup')`)) await closePanel();
       await ev(`document.querySelector('#notepad textarea')?.focus(), true`);
       // 卡片几秒后自己收起，按一小段就看一眼（周期中途也可能先出）
-      for (let i = 0; i < 40 && !(await ev(`!!document.querySelector('#pet .catch-card')`)); i++) {
+      for (let i = 0; i < 205 && !(await ev(`!!document.querySelector('#pet .catch-card')`)); i++) {
         await main.press(10);
         await waitFor(`!!document.querySelector('#pet .catch-card')`, 300);
       }

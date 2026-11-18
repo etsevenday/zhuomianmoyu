@@ -1133,3 +1133,46 @@ html.pc .boot { color: transparent; }
     cursor: nwse-resize;
     pointer-events: auto;
 }
+
+/* ---------- B8 画面修正（B7 巡检） ---------- */
+
+/* 底栏信息区两行（02 §1 线框）：上行总、金币，下行本轮、保存状态。标记顺序是总、本轮、金币、保存，按列排正好是这两行 */
+.stats {
+    display: grid;
+    grid-template-rows: auto auto;
+    grid-auto-flow: column;
+    justify-content: center;
+    align-content: center;
+    justify-items: start;
+    column-gap: 40px;
+    row-gap: 2px;
+    margin: 0 12px;
+    font-size: 40px;
+    line-height: 1.25;
+}
+.stat i { font-size: 30px; }
+.stat.save { font-size: 28px; padding: 2px 16px; }
+/* 新鱼数贴在鱼篓图标右上，不伸进隔壁"收藏" */
+.bottombar .badge { right: 0; }
+
+/* "更多"弹窗和"玩法模式"一样底边齐底栏，三行都露在底栏上面 */
+.more-menu { top: 382px; }
+
+/* 提示条长句折行，不出条、不伸到右上按钮下面 */
+.notice { white-space: normal; line-height: 1.25; }
+
+/* 皮肤：卡片名字一行放下；卡片矮一点、预览一侧紧凑，预览整排落在卡片标签下面 */
+.skin-cell { height: 72px; font-size: 24px; white-space: nowrap; padding: 0; }
+.skin-grid { margin-bottom: 12px; }
+.preview-row { min-height: 160px; } /* 至少放下右边的名字、状态、按钮（不按预览图的原始高度撑） */
+.preview-side { gap: 8px; }
+.preview-side .nm { font-size: 34px; line-height: 1.25; }
+.preview-side .state { font-size: 26px; }
+.preview-side .btn { height: 64px; font-size: 36px; }
+
+/* 鱼篓格子：体长字留在边框和勾选框里面 */
+.basket .fish-cell .pick { padding: 0 14px 0 6px; gap: 0; }
+.basket .fish-cell .pick svg { width: 120px; }
+
+/* 收藏室"更多鱼缸尚未开放。"：字和边框之间留白 */
+.more-tanks { padding: 0 20px; }
