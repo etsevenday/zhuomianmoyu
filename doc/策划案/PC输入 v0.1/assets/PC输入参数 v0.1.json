@@ -1,12 +1,12 @@
 {
   "schema_version": 1,
   "document_only": true,
-  "rules_version": "pc_input_0.1",
+  "rules_version": "pc_input_0.2",
   "date": "2026-11-18",
-  "status": "用户Q23/Q24已答，待开发接入及真实Windows验收",
+  "status": "Q23—Q25已答，B5已接入，人工验收见B5用例表",
   "platform": "Windows PC",
   "decision_sources": {
-    "source": "Q23①系统级计数，②默认开，③收起/遮挡手竿继续；Q24总控文案、缩放仅光标",
+    "source": "Q23系统级计数默认开及手竿规则，Q24总控文案及缩放光标，Q25系统模拟输入与物理输入采用相同资格条件",
     "direct_user_choices": true
   },
   "background_input": {
@@ -30,6 +30,7 @@
   },
   "counting": {
     "physical_keydown": 1,
+    "os_simulated_input_uses_same_eligibility_as_physical": true,
     "auto_repeat_counts": false,
     "key_up_counts": false,
     "combination_keys_individual": true,
@@ -93,8 +94,8 @@
   },
   "acceptance": {
     "prefix": "PCI",
-    "count": 12,
+    "count": 13,
     "real_os_external_app_evidence_required": true,
-    "synthetic_only_is_insufficient": true
+    "browser_or_game_simulation_alone_is_insufficient": true
   }
 }
