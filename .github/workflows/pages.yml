@@ -1,4 +1,4 @@
-name: 测试并发布到 GitHub Pages
+name: 测试并发布（网页到 GitHub Pages，PC 试玩包到 Releases）
 
 on:
   push:
@@ -74,3 +74,54 @@ jobs:
       - id: retry
         if: steps.deployment.outcome == 'failure'
         uses: actions/deploy-pages@v4
+
+  # PC 试玩包：内核测试过了才打，在 Windows 上打成 zip（Electron 运行时 + 网页包 + 自带运行时的采集程序），
+  # 发到固定的 Releases pc-latest：标签挪到这次提交、替换包，下载地址不变。和网页发布互不等待。
+  pc:
+    needs: build
+    runs-on: windows-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: 装 Electron
+        working-directory: pc
+        run: |
+          npm ci
+          node node_modules/electron/install.js
+
+      - name: 打 PC 试玩包
+        working-directory: pc
+        run: node pack.mjs
+
+      - name: 发布到 Releases（pc-latest）
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          ZIP=pc/dist/zhuomianmoyu-pc-win-x64.zip
+          SHA="${GITHUB_SHA::7}"
+          URL="https://github.com/${GITHUB_REPOSITORY}/releases/download/pc-latest/zhuomianmoyu-pc-win-x64.zip"
+          NOTES="构建 $(date -u +%Y-%m-%d) · ${SHA}（每次推送 main 自动更新）
+
+          下载：${URL}
+
+          解压后双击「桌面摸鱼/桌面摸鱼.exe」。没签名，第一次打开 Windows 会提示"已保护你的电脑"，点"更多信息 → 仍要运行"。
+          存档在 %APPDATA%\moyu-pc，换新包不丢。"
+          git tag -f pc-latest "$GITHUB_SHA"
+          git push -f origin refs/tags/pc-latest
+          if gh release view pc-latest >/dev/null 2>&1; then
+            gh release upload pc-latest "$ZIP" --clobber
+            gh release edit pc-latest --title "PC 试玩版 ${SHA}" --notes "$NOTES" --latest
+          else
+            gh release create pc-latest "$ZIP" --title "PC 试玩版 ${SHA}" --notes "$NOTES" --latest
+          fi

@@ -18,6 +18,7 @@
 #                                   小窗收不到转发的移动、不会按指针位置切穿透）
 #   click <hwnd> x y [left|middle]  (x, y) 上是 hwnd 时，指针移过去点一次
 #   drag <hwnd> x y dx dy           (x, y) 上是 hwnd 时，按下左键，挪 (dx, dy) 后松开
+#   点击、拖动完了指针不在该在的地方，就是有人在动真鼠标（测试环境被打扰）：报错停下，不把它当计数结果
 $ErrorActionPreference = 'Stop'
 Add-Type -TypeDefinition @'
 using System;
@@ -54,6 +55,8 @@ public static class Si {
     SendInput(1, new[] { i }, Marshal.SizeOf(typeof(INPUT)));
     SetCursorPos(x, y);
   }
+  [DllImport("user32.dll")] static extern bool GetCursorPos(out POINT p);
+  public static bool CursorAt(int x, int y) { POINT p; return GetCursorPos(out p) && p.x == x && p.y == y; }
   public static IntPtr At(int x, int y) { return GetAncestor(WindowFromPoint(new POINT { x = x, y = y }), 2); }
   public static IntPtr Fg() { return GetAncestor(GetForegroundWindow(), 2); }
   public static void Key(ushort vk, bool up) {
@@ -85,6 +88,7 @@ public static class Si {
 
 function Reply($o) { [Console]::Out.WriteLine(($o | ConvertTo-Json -Compress)); [Console]::Out.Flush() }
 function Guard([IntPtr]$h) { if ([Si]::Fg() -ne $h) { throw "前台不是指定窗口（前台 $([Si]::Fg())，要求 $h），停止发键" } }
+function Untouched($x, $y) { if (-not [Si]::CursorAt($x, $y)) { throw "指针不在 ($x, $y)：有人在动鼠标，停止（测试环境被打扰，不算结果）" } }
 function GuardAt([IntPtr]$h, $x, $y) { if ([Si]::At($x, $y) -ne $h) { throw "($x, $y) 上不是指定窗口（是 $([Si]::At($x, $y))，要求 $h），停止点击" } }
 $VK_1 = 0x31; $VK_SHIFT = 0x10  # 数字 1：中文输入法不拦（不在组字时直接上屏），字母会进拼音组字
 $down = @{ left = 0x2; middle = 0x20 }; $up = @{ left = 0x4; middle = 0x40 }
@@ -120,11 +124,13 @@ while ($null -ne ($line = [Console]::In.ReadLine())) {
         Reply @{ ok = $true }
       }
       'point' { [Si]::MoveTo([int]$a[1], [int]$a[2]); Reply @{ ok = $true } }
+      'at' { Reply @{ ok = $true; hwnd = [long][Si]::At([int]$a[1], [int]$a[2]) } }
       'click' {
         $x = [int]$a[2]; $y = [int]$a[3]; GuardAt ([IntPtr][long]$a[1]) $x $y
         $b = if ($a.Length -gt 4) { $a[4] } else { 'left' }
         [Si]::SetCursorPos($x, $y) | Out-Null; Start-Sleep -Milliseconds 60
         [Si]::Button($down[$b]); Start-Sleep -Milliseconds 40; [Si]::Button($up[$b]); Start-Sleep -Milliseconds 60
+        Untouched $x $y
         Reply @{ ok = $true }
       }
       'drag' {
@@ -133,6 +139,7 @@ while ($null -ne ($line = [Console]::In.ReadLine())) {
         [Si]::Button(0x2)
         for ($i = 1; $i -le 8; $i++) { Start-Sleep -Milliseconds 20; [Si]::SetCursorPos($x + [int]($dx * $i / 8), $y + [int]($dy * $i / 8)) | Out-Null }
         Start-Sleep -Milliseconds 40; [Si]::Button(0x4); Start-Sleep -Milliseconds 60
+        Untouched ($x + $dx) ($y + $dy)
         Reply @{ ok = $true }
       }
       default { Reply @{ ok = $false; error = "不认识的命令 $($a[0])" } }

@@ -3,6 +3,7 @@
 // ② 把网页发布成 Release 包（pc/build-web.mjs），以测试模式启动 Electron，经 CDP 连渲染页操作，
 //    用外壳的测试入口 window.moyuPc.test 读窗口位置、穿透、置顶、焦点，换成虚构显示器触发换屏、拔屏、改分辨率。
 // PC 包本来就是 Release 发布，--release 只为和其他批次的命令一致。每次启动都用新的数据目录（除非用例要重启恢复）。
+// MOYU_PC_APP=<试玩包里的 桌面摸鱼.exe>：不发布网页包，改测这个打好的包（B6）。
 import { spawn, spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
@@ -14,6 +15,9 @@ const REPO = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..')
 const PC = path.join(REPO, 'pc');
 const L = createRequire(import.meta.url)(path.join(PC, 'src', 'layout.js'));
 const ELECTRON = path.join(PC, 'node_modules', 'electron', 'dist', process.platform === 'win32' ? 'electron.exe' : 'electron');
+const PACKED = process.env.MOYU_PC_APP ? path.resolve(process.env.MOYU_PC_APP) : null;
+/** 启动外壳的命令：开发时 electron.exe pc，测包时直接包里的 exe。 */
+const APP = PACKED ? [PACKED, []] : [ELECTRON, [PC]];
 const out = path.resolve(process.argv[3] || path.join(os.tmpdir(), 'moyu-b4'));
 const PORT = Number(process.env.PLAYTEST_PORT || 9351);
 fs.mkdirSync(path.join(out, 'screenshots'), { recursive: true });
@@ -102,6 +106,7 @@ function layoutChecks() {
 
 // ───── ② Electron ─────
 function buildWeb() {
+  if (PACKED) return;
   const r = spawnSync(process.execPath, [path.join(PC, 'build-web.mjs')], { cwd: PC, encoding: 'utf8', stdio: 'inherit' });
   if (r.status !== 0) throw new Error('网页发布失败');
 }
@@ -109,11 +114,13 @@ function buildWeb() {
 /**
  * 启动一次外壳；返回渲染页的 CDP 会话。input：先写进数据目录的后台输入偏好（B5）。B4 只测窗口，
  * 默认按"玩家关过"启动，免得系统层面的输入混进来；传 null 不写，用外壳自己的默认。
+ * test: false —— 正常模式（玩家双击的样子），没有开发入口和测试入口，只换数据目录（B6）。
  */
-async function launch({ userData, displays = ONE, port = PORT, env = {}, input = { on: false, chosen: true } } = {}) {
+async function launch({ userData, displays = ONE, port = PORT, env = {}, input = { on: false, chosen: true }, test = true, app = APP } = {}) {
   if (input) fs.writeFileSync(path.join(userData, 'input.json'), JSON.stringify({ version: 1, introShown: false, ...input }));
-  const proc = spawn(ELECTRON, [PC, `--remote-debugging-port=${port}`], {
-    env: { ...process.env, MOYU_TEST: '1', MOYU_USER_DATA: userData, MOYU_FAKE_DISPLAYS: JSON.stringify(displays), ...env },
+  const testEnv = test ? { MOYU_TEST: '1', MOYU_FAKE_DISPLAYS: JSON.stringify(displays) } : {};
+  const proc = spawn(app[0], [...app[1], `--remote-debugging-port=${port}`], {
+    env: { ...process.env, ...testEnv, MOYU_USER_DATA: userData, ...env },
     stdio: 'ignore',
   });
   const exited = new Promise(r => proc.once('exit', code => r(code)));
@@ -235,7 +242,7 @@ async function launch({ userData, displays = ONE, port = PORT, env = {}, input =
     kill() { try { ws.close(); } catch { } proc.kill(); return exited; },
   };
   await s('Runtime.evaluate', { expression: HELPERS });
-  if (!(await waitFor(`!!window.moyuDev && !!(document.querySelector('#pet') || document.querySelector('#avatar')) && (!document.querySelector('[data-stat=save]') || document.querySelector('[data-stat=save]').innerText.trim() === '已保存')`, 40000)))
+  if (!(await waitFor(`${test ? '!!window.moyuDev && ' : ''}!!(document.querySelector('#pet') || document.querySelector('#avatar')) && (!document.querySelector('[data-stat=save]') || document.querySelector('[data-stat=save]').innerText.trim() === '已保存')`, 40000)))
     throw new Error('小窗没有载入');
   await sleep(500);
   return p;
@@ -429,7 +436,7 @@ async function electronChecks() {
 
     // B4-33 单实例（在 B4-27 退出之前）
     {
-      const second = spawn(ELECTRON, [PC], { env: { ...process.env, MOYU_TEST: '1', MOYU_USER_DATA: dataMain, MOYU_FAKE_DISPLAYS: JSON.stringify(ONE) }, stdio: 'ignore' });
+      const second = spawn(APP[0], APP[1], { env: { ...process.env, MOYU_TEST: '1', MOYU_USER_DATA: dataMain, MOYU_FAKE_DISPLAYS: JSON.stringify(ONE) }, stdio: 'ignore' });
       const code = await Promise.race([new Promise(r => second.once('exit', r)), sleep(10000).then(() => 'timeout')]);
       if (code === 'timeout') second.kill();
       await sleep(300);
@@ -550,7 +557,7 @@ function staticChecks() {
 
 let build = null, fatal = null;
 const errorsSeen = [];
-export { launch, disp, ONE, L, sleep };
+export { launch, disp, ONE, L, sleep, PACKED };
 if (import.meta.url === pathToFileURL(process.argv[1]).href) {
 try {
   layoutChecks();

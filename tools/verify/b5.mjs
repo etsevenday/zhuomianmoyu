@@ -3,12 +3,13 @@
 // 用 sendinput.ps1 发系统层面的真实按键和点击（和用户自己按键走同一条路），看计数、动作、状态、提示和记事本收到的字。
 // 发键前确认前台是指定窗口、点击前确认那一点上是指定窗口，不对就停，不会往别的软件里打字或点击。
 // 跑的时候不要动鼠标键盘。PC 包本来就是 Release 发布，--release 只为和其他批次的命令一致。
+// MOYU_PC_APP=<试玩包里的 桌面摸鱼.exe>：不发布，改测这个打好的包和包里的采集程序（B6）。
 import { spawn, spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { launch, sleep } from './b4.mjs';
+import { launch, sleep, PACKED } from './b4.mjs';
 
 const REPO = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const PC = path.join(REPO, 'pc');
@@ -27,6 +28,7 @@ const TXT = Object.fromEntries(fs.readFileSync(COPY_FILE, 'utf8').split('\n')
   .filter(l => /^\| TXT-PC-\d{3} \|/.test(l)).map(l => { const c = l.split('|').map(s => s.trim()); return [c[1], c[3]]; }));
 
 function build() {
+  if (PACKED) return;
   const r = spawnSync(process.execPath, [path.join(PC, 'build-web.mjs')], { cwd: PC, stdio: 'inherit' });
   if (r.status !== 0) throw new Error('网页发布失败');
   const r2 = spawnSync('dotnet', ['publish', 'input', '-c', 'Release', '-o', '.input', '--nologo', '-v', 'q'], { cwd: PC, stdio: 'inherit' });
@@ -172,11 +174,11 @@ async function run() {
   }
   // B5-05 点击
   {
-    const t0 = await inputs();
+    const t0 = await inputs(), c0 = (await st()).capture;
     await si.cmd(`click ${np.hwnd} ${npPoint.x} ${npPoint.y} left`);
     await si.cmd(`click ${np.hwnd} ${npPoint.x + 20} ${npPoint.y} middle`);
-    const t1 = await settle(t0 + 2);
-    check('B5-05 记事本里左键、中键各点一次：计数 +2', t1 - t0 === 2, { inputs: t1 - t0 });
+    const t1 = await settle(t0 + 2), c1 = (await st()).capture;
+    check('B5-05 记事本里左键、中键各点一次：计数 +2', t1 - t0 === 2, { inputs: t1 - t0, clicks: c1.clicks - c0.clicks, own: c1.own - c0.own });
   }
   // B5-06 拖动
   {
@@ -192,8 +194,10 @@ async function run() {
     const t0 = await inputs();
     const clickOwn = async cssPt => {
       const q = await phys(cssPt);
+      // 小窗按指针位置切到"接住"：等到那一点上真是小窗再点（守卫照样把关）。最多等 10 秒：
+      // 小窗默认在右下角，Windows 的通知弹窗也在那儿，会盖住几秒
       await si.cmd(`point ${q.x} ${q.y}`);
-      await sleep(300); // 小窗按指针位置切到"接住"
+      for (let i = 0; i < 100 && String((await si.cmd(`at ${q.x} ${q.y}`)).hwnd) !== s0.hwnd; i++) await sleep(100);
       await si.cmd(`click ${s0.hwnd} ${q.x} ${q.y}`);
       await sleep(300);
     };
@@ -225,13 +229,14 @@ async function run() {
     const q = await phys(blank);
     await si.cmd(`point ${q.x} ${q.y}`);
     await sleep(400); // 小窗按指针位置切到穿透
-    const t0 = await inputs();
+    const t0 = await inputs(), c0 = (await st()).capture;
     let through = true;
     // 守卫：这一点上的窗口必须已经是记事本（小窗确实让开了），否则不点
     try { await si.cmd(`click ${np.hwnd} ${q.x} ${q.y}`); } catch { through = false; }
-    const t1 = await settle(t0 + 1);
+    const t1 = await settle(t0 + 1), c1 = (await st()).capture;
     const fg = (await si.cmd('fg')).hwnd;
-    check('B5-09 小窗留白处系统点击：落到记事本（它到了前台）、计数 +1', through && fg === np.hwnd && t1 - t0 === 1, { through, notepadFront: fg === np.hwnd, inputs: t1 - t0 });
+    check('B5-09 小窗留白处系统点击：落到记事本（它到了前台）、计数 +1', through && fg === np.hwnd && t1 - t0 === 1,
+      { through, notepadFront: fg === np.hwnd, inputs: t1 - t0, clicks: c1.clicks - c0.clicks, own: c1.own - c0.own });
   }
   // B5-10 收起
   {

@@ -17,11 +17,13 @@ Windows 桌面上的透明小窗伙伴：一边工作一边让小熊在角落钓
 
 **PC 版（B4、B5，Electron）：** 透明无框小窗直接浮在真实桌面上，界面和玩法与网页同一份。
 
+**PC 试玩包（B6）：** 每次推送 main 自动打包，下载地址固定：<https://github.com/etsevenday/zhuomianmoyu/releases/download/pc-latest/zhuomianmoyu-pc-win-x64.zip>（[发布页](https://github.com/etsevenday/zhuomianmoyu/releases/tag/pc-latest)写着是哪次提交）。解压后双击"桌面摸鱼/桌面摸鱼.exe"，不用装别的；没签名，第一次打开点"更多信息 → 仍要运行"。存档在 `%APPDATA%\moyu-pc`，换新包不丢，和本地 `npm start` 是同一份。
+
 - 留白处鼠标穿透到下层软件（设置里可关）；按住小熊或水面拖动窗口；右下角拖动自由缩放，锁 16:9，最小 400×225，记住占屏比例，换屏、改分辨率、重启都按它恢复。
 - 收起成头像、置顶真实生效；关闭就是存档后退出程序；只能开一个。
 - 窗口设置存在数据目录的 `window.json`，和玩法存档分开。
 - 后台输入（B5）：默认开（设置里可关，关过重启仍关），在别的软件（包括浏览器）里每按下一次键、点一次鼠标都算一次，和网页版页面里的口径一样；点小窗自己、小窗在前台时打字不算。关着时什么都不采；设置里显示实际状态（正在采集 / 尚未采集 / 已关闭）。只数次数，不记按了什么、点在哪个软件。
-- 还没有：Steam 联机、安装包和签名。
+- 还没有：Steam 联机、安装包、签名和自动升级。
 
 ## 工程结构
 
@@ -34,13 +36,13 @@ src/Core/                纯 C# 内核，不依赖 UnityEngine；同时是一个
 web/Moyu.Core/           .NET 类库，编译 src/Core 的源码
 web/Moyu.Core.Tests/     NUnit：第一阶段可在内核判定的验收（UI、SPACE、CONTENT 等编号）
 web/Moyu.Web/            Blazor WebAssembly 网页壳：模拟桌面、小窗、面板；手势在 wwwroot/js/pet.js，工作输入、存档、写权在 wwwroot/js/play.js
-pc/                      PC 外壳（Electron）：src/main.js 窗口、穿透与后台输入转发，src/layout.js 窗口尺寸计算，input/ 后台输入采集程序（C#，Raw Input），build-web.mjs 把网页发布进来
+pc/                      PC 外壳（Electron）：src/main.js 窗口、穿透与后台输入转发，src/layout.js 窗口尺寸计算，input/ 后台输入采集程序（C#，Raw Input），build-web.mjs 把网页发布进来，pack.mjs 打试玩包
 tools/verify/            浏览器验收脚本（零依赖 Node + CDP），每批一个，对应 doc/测试用例/ 的用例表；b4.mjs 启动 Electron 测
 ```
 
 将来接 Unity：在 Unity 工程的 `Packages/manifest.json` 里加 `"com.moyu.core": "file:../../src/Core"`。
 
-本地运行需要 .NET 8 SDK：`dotnet test web/Moyu.sln`；`dotnet run --project web/Moyu.Web --launch-profile http`（http://localhost:5188）。PC 版：`cd pc && npm install && npm run build && npm start`（`build` = 网页包 + 采集程序；采集程序要 .NET 8 运行时）（`node_modules/electron/dist` 没下来时补 `node node_modules/electron/install.js`）。浏览器验收需要 Node 22+ 和 Chrome/Edge：推送前跑 `node tools/verify/b5.mjs --release`、`b4.mjs --release`（PC，要先 `cd pc && npm install`；b5 会开记事本发真实按键点击，跑的时候别动鼠标键盘），回归 `b3.mjs`、`b2.mjs`、`b1.mjs`、`b0.mjs`（都带 `--release`）（照 CI 发布本地 Release 包再测）；也可给开发服务器网址，不给网址就测线上。改了内核还要跑变异测试：`dotnet tool restore` 后在 `web/Moyu.Core.Tests` 里 `dotnet stryker --since:origin/main`（见测试用例准则 §5）。
+本地运行需要 .NET 8 SDK：`dotnet test web/Moyu.sln`；`dotnet run --project web/Moyu.Web --launch-profile http`（http://localhost:5188）。PC 版：`cd pc && npm install && npm run build && npm start`（`build` = 网页包 + 采集程序；采集程序要 .NET 8 运行时）（`node_modules/electron/dist` 没下来时补 `node node_modules/electron/install.js`）。浏览器验收需要 Node 22+ 和 Chrome/Edge：推送前跑 `node tools/verify/b5.mjs --release`、`b4.mjs --release`（改了打包或发布再跑 `b6.mjs --release`：打包后用包跑 b4、b5）（PC，要先 `cd pc && npm install`；b5 会开记事本发真实按键点击，跑的时候别动鼠标键盘），回归 `b3.mjs`、`b2.mjs`、`b1.mjs`、`b0.mjs`（都带 `--release`）（照 CI 发布本地 Release 包再测）；也可给开发服务器网址，不给网址就测线上。改了内核还要跑变异测试：`dotnet tool restore` 后在 `web/Moyu.Core.Tests` 里 `dotnet stryker --since:origin/main`（见测试用例准则 §5）。
 
 ## 分工
 

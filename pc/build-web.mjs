@@ -1,4 +1,5 @@
-// 把网页版发布成 Release 包放到 pc/.web，外壳从这里加载。构建号写成"PC 本地 · <提交>"。
+// 把网页版发布成 Release 包放到 pc/.web，外壳从这里加载。构建号写成"PC 本地 · <提交>"；
+// 打试玩包时 pack.mjs 用 MOYU_BUILD_PREFIX 换掉"PC 本地"（"PC 试玩版 · <日期>"）。
 import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -23,7 +24,7 @@ if (pub.status !== 0) {
 const index = path.join(OUT, 'wwwroot', 'index.html');
 const sha = git(['rev-parse', '--short=7', 'HEAD']) + (git(['status', '--porcelain', '--', 'src', 'web', 'pc/src']) ? '+改动' : '');
 const html = fs.readFileSync(index, 'utf8')
-  .replace('<meta name="app-build" content="本地开发版" />', `<meta name="app-build" content="PC 本地 · ${sha}" />`)
+  .replace('<meta name="app-build" content="本地开发版" />', `<meta name="app-build" content="${process.env.MOYU_BUILD_PREFIX || 'PC 本地'} · ${sha}" />`)
   .replace('<title>桌面摸鱼 · 网页试玩</title>', '<title>桌面摸鱼</title>')
   .replaceAll('?v=dev', '?v=pc');
 fs.writeFileSync(index, html);
