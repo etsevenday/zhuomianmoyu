@@ -139,3 +139,21 @@ jobs:
           else
             gh release create pc-latest "$ZIP" --title "PC 试玩版 ${SHA}" --notes "$NOTES" --latest
           fi
+
+      # B7：每次都截一套存成附件，方便隔批对比；放在发布后面、出错也不挡发布。看图由开发方每批做一次
+      - name: 截图巡检（不挡发布）
+        if: always()
+        continue-on-error: true
+        shell: pwsh
+        run: |
+          Expand-Archive pc/dist/zhuomianmoyu-pc-win-x64.zip "$env:RUNNER_TEMP/shots-app" -Force
+          $env:MOYU_PC_APP = (Get-ChildItem "$env:RUNNER_TEMP/shots-app/*/*.exe" | Select-Object -First 1).FullName
+          node tools/verify/shots.mjs --release "$env:RUNNER_TEMP/shots"
+
+      - name: 截图附件
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: shots
+          path: ${{ runner.temp }}/shots
+          if-no-files-found: ignore
