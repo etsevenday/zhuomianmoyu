@@ -3,7 +3,7 @@
 日期：2026-11-18　|　发起：用户"真实联机写评估"
 **用户决定（2026-11-18）**：按本稿方向推进；§7 的 Q26、Q27 已写进[开发方待确认问题](<../策划案/00 总则/02 开发方待确认问题.md>)交策划和文案。
 依据：[房间规则 ROOM-001](<../策划案/同图房间 v0.1/01 房间规则与模拟陪伴.md>)、[B3 交接与验收](<../策划案/同图房间 v0.1/02 B3交接与验收.md>)（NET-01—05）、[B3 房间文案](<../策划案/文案交接 v0.1/04 B3房间文案定稿.md>)（TXT-ROOM-038—048 已是 PC 真实房间的句子）、现有代码（`src/Core/Rooms/Room.cs` 房间状态机、`pc/` Electron 外壳和采集程序）。
-本稿没有做任何 Steam 实验：库的能力来自文档和代码清单，标了"待实测"的要在 §6 第一步的小实验里验证，不能当成已经验证。
+§1—§7 写于实验前：库的能力来自文档和代码清单，标了"待实测"的在 §6 第一步的小实验里验证，结果见 §8（2026-11-18 已做）。
 
 ## 1. 结论
 
@@ -95,7 +95,32 @@ CI 上不能登录 Steam，所以 Steam 本身的那部分只能人工测；规�
 - **Q26 没开 Steam 或没登录时 PC 版怎样**：A. 单机照常玩，只有房间入口提示"需要先启动并登录 Steam"（开发方建议）；B. 必须开着 Steam 才能启动。选 A 要文案补一句提示。
 - **Q27 邀请好友的入口**：A. 房间面板里列出在线的 Steam 好友，每人一个"邀请"按钮（开发方建议：不依赖叠加层）；B. 只靠玩家在 Steam 好友列表里右键"邀请加入游戏"。选 A 要定好友列表的排版和几句文案（列表标题、在线/游戏中状态、没有在线好友时的说明）。
 
-## 8. 参考
+## 8. 小实验结果（2026-11-18）
+
+程序：`tools/steam-spike/`（[README](<../../tools/steam-spike/README.md>)），加入方的包发在 Releases `steam-spike-1`，经 [etsevenday/zhuomianmoyu#11](https://github.com/etsevenday/zhuomianmoyu/issues/11) 交策划在另一台电脑上跑。两台电脑不在同一局域网，两个互为好友的 Steam 账号（开发方当房主），全程走 Steam 中继。
+
+| 项目 | 结果 |
+| --- | --- |
+| 建仅好友房间（4 人） | 通过，约 0.3 秒 |
+| 邀请到对方进房（对方已开着程序） | 通过，863 毫秒（其中对方进房本身 295 毫秒）；对方程序收到邀请自动进房，不用在 Steam 里点 |
+| 房间数据进房就能读到 | 通过（标记、版本、代次、房主的模式都对） |
+| 成员数据同步 | 通过，对方改自己的模式后 423 毫秒房主读到 |
+| 非房主写房间数据 | 没生效（房主读不到），**但对方那边 `SetLobbyData` 返回了 true** |
+| 网络消息往返 30 次 | 30/30，最短 140、中位 145、最长 152 毫秒 |
+| 不可靠消息 1 秒连发 100 条 | 100/100 |
+| 房间数据 2 秒连改 20 次 | 对方收到 20 次更新，最后的值对；这个频率没碰到限制 |
+| 房间聊天连发 10 条 | 10/10 |
+| 房主退出后换所有者 | 通过：对方在房主说要走后约 1.2 秒收到"离开"通知，这时所有者已经是自己，随即写入新代次成功；旧房主回来读到所有者是对方、代次 2 |
+| 旧房主回来后写房间数据 | **没过预期**：`SetLobbyData` 返回了 true（预期 false）。结合"非房主写房间数据"一行，非房主写一律返回 true、但不生效；旧房主这次写有没有生效没量，按那一行推断也不生效 |
+
+结论：方案 B（Steam 房间 + 网络消息）可行，§4 的做法不用改；"待实测"的交接时机、数据频率都已量过。两点落到第 2、3 步：
+
+- **能不能写房间数据看 `GetLobbyOwner`，不看 `SetLobbyData` 的返回值**（上面两行：非房主写也返回 true，只是不生效）；快照带代次，收到比自己已知代次旧的快照就丢掉，旧房主即使写进去也不会把房间带回旧状态。
+- 房主离开约 1 秒后接手。"正在切换房主…"（TXT-ROOM-029）只会显示一秒多，不用做长等待。
+
+没测到的：对方**没开程序时**点邀请被拉起加入（480 会启动 Valve 的 Spacewar，换自己的 App ID 才能测，留到第 4 步）；4 人房（只有 2 个账号）；真实掉线（拔网线，不是正常退出），留给第 3 步人工用例。两边的结果文件（房主、加入方各一份）对得上，上表已按两份合并。
+
+## 9. 参考
 
 - Valve 文档：[Steam 房间（匹配）](https://partner.steamgames.com/doc/features/multiplayer/matchmaking)、[Steam 网络](https://partner.steamgames.com/doc/features/multiplayer/networking)、[ISteamNetworkingMessages](https://partner.steamgames.com/doc/api/ISteamNetworkingMessages)、[Steam Direct 费用](https://partner.steamgames.com/doc/gettingstarted/appfee)
 - 绑定库：[steamworks.js](https://github.com/ceifa/steamworks.js)、[Steamworks.NET 发布记录](https://github.com/rlabrecque/Steamworks.NET/releases)、[steamworks-ffi-node](https://sourceforge.net/p/steamworks-ffi-node/code)
