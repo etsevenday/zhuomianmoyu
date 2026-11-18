@@ -111,12 +111,16 @@ jobs:
           ZIP=pc/dist/zhuomianmoyu-pc-win-x64.zip
           SHA="${GITHUB_SHA::7}"
           URL="https://github.com/${GITHUB_REPOSITORY}/releases/download/pc-latest/zhuomianmoyu-pc-win-x64.zip"
-          NOTES="构建 $(date -u +%Y-%m-%d) · ${SHA}（每次推送 main 自动更新）
+          # 说明用 heredoc 写，里面的引号、反斜杠不经 shell 转义
+          NOTES=$(cat <<NOTES_END
+          构建 $(date -u +%Y-%m-%d) · ${SHA}（每次推送 main 自动更新）
 
           下载：${URL}
 
           解压后双击「桌面摸鱼/桌面摸鱼.exe」。没签名，第一次打开 Windows 会提示"已保护你的电脑"，点"更多信息 → 仍要运行"。
-          存档在 %APPDATA%\moyu-pc，换新包不丢。"
+          存档在 %APPDATA%\moyu-pc，换新包不丢。
+          NOTES_END
+          )
           git tag -f pc-latest "$GITHUB_SHA"
           git push -f origin refs/tags/pc-latest
           if gh release view pc-latest >/dev/null 2>&1; then

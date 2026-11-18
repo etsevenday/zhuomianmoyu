@@ -147,8 +147,17 @@ function staticChecks() {
     release: /pc-latest/.test(job) && /--clobber/.test(job) && new RegExp(ZIP_NAME.replace(/\./g, '\\.')).test(job) && /git push -f origin .*refs\/tags\/pc-latest/.test(job) && /GITHUB_SHA/.test(job),
     perms: /contents: write/.test(job) && /contents: read/.test(top) && (wf.match(/contents: write/g) || []).length === 1,
   };
-  check('B6-06 工作流：推 main 触发，内核测试过了才在 Windows 上打包，发到 pc-latest（挪标签、替换包、写提交号），只有它能写仓库',
-    Object.values(ok).every(Boolean), ok);
+  // 发布那一步的脚本真用 bash 跑一遍（git、gh 换成桩，只记下发出去的标题和说明）：引号写错这类问题静态看不出来
+  const step = /name: 发布到 Releases[\s\S]*?run: \|\n((?: {10}.*\n|\n)+)/.exec(wf + '\n')?.[1].replace(/^ {10}/gm, '') || '';
+  const sh = path.join(tmp, 'release.sh');
+  fs.writeFileSync(sh, step);
+  const dry = spawnSync('bash', ['-e', '-o', 'pipefail', '-c',
+    'git(){ :; }; gh(){ [ "$2" = view ] && return 1; printf "%s\\n" "$6" "$8"; }; source "$1"', 'dry', sh.replace(/\\/g, '/')],
+    { encoding: 'utf8', env: { ...process.env, GITHUB_SHA: 'abc1234def', GITHUB_REPOSITORY: 'etsevenday/zhuomianmoyu' } });
+  ok.script = dry.status === 0 && dry.stdout.startsWith('PC 试玩版 abc1234\n') && dry.stdout.includes(URL_)
+    && dry.stdout.includes('"更多信息 → 仍要运行"') && dry.stdout.includes('%APPDATA%\\moyu-pc');
+  check('B6-06 工作流：推 main 触发，内核测试过了才在 Windows 上打包，发到 pc-latest（挪标签、替换包、写提交号），只有它能写仓库；发布脚本试跑出的标题、说明对',
+    Object.values(ok).every(Boolean), { ...ok, dry: dry.stdout || dry.stderr });
 }
 
 try {
