@@ -76,10 +76,12 @@ jobs:
         uses: actions/deploy-pages@v4
 
   # PC 试玩包：内核测试过了才打，在 Windows 上打成 zip（Electron 运行时 + 网页包 + 自带运行时的采集程序），
-  # 发到固定的 Releases pc-latest：标签挪到这次提交、替换包，下载地址不变。和网页发布互不等待。
+  # 用打好的包跑 B6 全套（含 b4 窗口、b5 系统层面的真实按键点击，这台机器自己的桌面，不占开发机），
+  # 过了才发到固定的 Releases pc-latest：标签挪到这次提交、替换包，下载地址不变。和网页发布互不等待。
   pc:
     needs: build
-    runs-on: windows-latest
+    # 固定 2022：b5 用经典记事本（Edit 控件）读收到的字数
+    runs-on: windows-2022
     permissions:
       contents: write
     steps:
@@ -91,7 +93,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 24
 
       - name: 装 Electron
         working-directory: pc
@@ -99,9 +101,17 @@ jobs:
           npm ci
           node node_modules/electron/install.js
 
-      - name: 打 PC 试玩包
-        working-directory: pc
-        run: node pack.mjs
+      - name: 打 PC 试玩包并验收（b6：打包、解开、正常启动，用包跑 b4、b5）
+        # 结果放到 pc/dist 外面：打包时会先清空 pc/dist
+        run: node tools/verify/b6.mjs --release "${{ runner.temp }}/pc-verify"
+
+      - name: 验收结果
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pc-verify
+          path: ${{ runner.temp }}/pc-verify
+          if-no-files-found: ignore
 
       - name: 发布到 Releases（pc-latest）
         shell: bash

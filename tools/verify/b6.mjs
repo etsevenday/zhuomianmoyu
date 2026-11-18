@@ -82,10 +82,16 @@ async function run() {
     .filter(f => exists(path.join(root, f)));
   const locales = exists(path.join(root, 'locales')) ? fs.readdirSync(path.join(root, 'locales')).sort() : [];
   const pkg = exists(path.join(app, 'package.json')) ? JSON.parse(fs.readFileSync(path.join(app, 'package.json'), 'utf8')) : {};
-  check('B6-01 资源管理器解开是"桌面摸鱼"文件夹和 桌面摸鱼.exe；外壳、网页包、采集程序都在；没有默认页和开发用的东西',
+  // zip 条目名按规范用 /；条目数和解开的文件数一样（资源管理器没丢东西）
+  const names = JSON.parse(ps(`Add-Type -AssemblyName System.IO.Compression.FileSystem
+$z = [IO.Compression.ZipFile]::OpenRead($env:X_ZIP); ConvertTo-Json -Compress @($z.Entries | ForEach-Object { $_.FullName }); $z.Dispose()`, { X_ZIP: zip }));
+  const backslash = names.filter(n => n.includes('\\')).length;
+  const files = fs.readdirSync(x, { recursive: true, withFileTypes: true }).filter(e => e.isFile()).length;
+  check('B6-01 资源管理器解开是"桌面摸鱼"文件夹和 桌面摸鱼.exe；外壳、网页包、采集程序都在；没有默认页和开发用的东西；条目名用 /',
     top.length === 1 && top[0] === '桌面摸鱼' && exists(exe) && missing.length === 0 && extra.length === 0
-    && locales.join() === 'en-US.pak,zh-CN.pak' && pkg.name === 'moyu-pc' && pkg.main === 'src/main.js',
-    { top, missing, extra, locales, pkg });
+    && locales.join() === 'en-US.pak,zh-CN.pak' && pkg.name === 'moyu-pc' && pkg.main === 'src/main.js'
+    && backslash === 0 && files === names.length,
+    { top, missing, extra, locales, pkg, entries: names.length, files, backslash });
 
   // ── B6-02、B6-03 正常模式启动 ──
   const userData = path.join(tmp, 'data');
@@ -143,7 +149,8 @@ function staticChecks() {
   const ok = {
     trigger: /on:\n  push:\n    branches: \[main\]/.test(wf) && !/pc\//.test(ignore),
     afterTests: /needs: build/.test(job) && /runs-on: windows-/.test(job),
-    pack: /node pack\.mjs/.test(job) && /electron\/install\.js/.test(job),
+    pack: /node tools\/verify\/b6\.mjs --release/.test(job) && /electron\/install\.js/.test(job)
+      && job.indexOf('b6.mjs') < job.indexOf('name: 发布到 Releases'),
     release: /pc-latest/.test(job) && /--clobber/.test(job) && new RegExp(ZIP_NAME.replace(/\./g, '\\.')).test(job) && /git push -f origin .*refs\/tags\/pc-latest/.test(job) && /GITHUB_SHA/.test(job),
     perms: /contents: write/.test(job) && /contents: read/.test(top) && (wf.match(/contents: write/g) || []).length === 1,
   };
@@ -151,12 +158,15 @@ function staticChecks() {
   const step = /name: 发布到 Releases[\s\S]*?run: \|\n((?: {10}.*\n|\n)+)/.exec(wf + '\n')?.[1].replace(/^ {10}/gm, '') || '';
   const sh = path.join(tmp, 'release.sh');
   fs.writeFileSync(sh, step);
-  const dry = spawnSync('bash', ['-e', '-o', 'pipefail', '-c',
+  // 用 Git 自带的 bash（Windows 上 PATH 里的 bash 可能是 WSL 的）
+  const bash = process.platform === 'win32'
+    ? path.resolve(git(['--exec-path']), '../../../bin/bash.exe') : 'bash';
+  const dry = spawnSync(bash, ['-e', '-o', 'pipefail', '-c',
     'git(){ :; }; gh(){ [ "$2" = view ] && return 1; printf "%s\\n" "$6" "$8"; }; source "$1"', 'dry', sh.replace(/\\/g, '/')],
     { encoding: 'utf8', env: { ...process.env, GITHUB_SHA: 'abc1234def', GITHUB_REPOSITORY: 'etsevenday/zhuomianmoyu' } });
   ok.script = dry.status === 0 && dry.stdout.startsWith('PC 试玩版 abc1234\n') && dry.stdout.includes(URL_)
     && dry.stdout.includes('"更多信息 → 仍要运行"') && dry.stdout.includes('%APPDATA%\\moyu-pc');
-  check('B6-06 工作流：推 main 触发，内核测试过了才在 Windows 上打包，发到 pc-latest（挪标签、替换包、写提交号），只有它能写仓库；发布脚本试跑出的标题、说明对',
+  check('B6-06 工作流：推 main 触发，内核测试过了才在 Windows 上打包并用包跑 b6（含 b4、b5），过了才发到 pc-latest（挪标签、替换包、写提交号），只有它能写仓库；发布脚本试跑出的标题、说明对',
     Object.values(ok).every(Boolean), { ...ok, dry: dry.stdout || dry.stderr });
 }
 

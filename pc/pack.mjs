@@ -17,6 +17,17 @@ const ZIP = path.join(DIST, 'zhuomianmoyu-pc-win-x64.zip');
 const ELECTRON = path.join(PC, 'node_modules', 'electron', 'dist');
 const LOCALES = ['zh-CN.pak', 'en-US.pak'];
 
+/** 递归复制，keep(相对路径) 为 false 的不要。不用 fs.cpSync：Node 22 在 Windows 上不带 filter 时整个目录静默不复制（CI 上出过） */
+function copyDir(src, dst, keep = () => true, rel = '') {
+  fs.mkdirSync(dst, { recursive: true });
+  for (const e of fs.readdirSync(src, { withFileTypes: true })) {
+    const r = path.join(rel, e.name);
+    if (!keep(r)) continue;
+    if (e.isDirectory()) copyDir(path.join(src, e.name), path.join(dst, e.name), keep, r);
+    else fs.copyFileSync(path.join(src, e.name), path.join(dst, e.name));
+  }
+}
+
 const run = (cmd, args, opts = {}) => {
   const r = spawnSync(cmd, args, { cwd: PC, stdio: 'inherit', ...opts });
   if (r.status !== 0) throw new Error(`${cmd} ${args.join(' ')} 失败`);
@@ -28,15 +39,8 @@ fs.rmSync(DIST, { recursive: true, force: true });
 run(process.execPath, ['build-web.mjs'], { env: { ...process.env, MOYU_BUILD_PREFIX: `PC 试玩版 · ${new Date().toISOString().slice(0, 10)}` } });
 
 console.log('复制 Electron 运行时……');
-fs.cpSync(ELECTRON, STAGE, {
-  recursive: true,
-  filter: src => {
-    const rel = path.relative(ELECTRON, src);
-    if (rel === path.join('resources', 'default_app.asar')) return false;
-    if (path.dirname(rel) === 'locales') return LOCALES.includes(path.basename(rel));
-    return true;
-  },
-});
+copyDir(ELECTRON, STAGE, rel => rel !== path.join('resources', 'default_app.asar')
+  && (path.dirname(rel) !== 'locales' || LOCALES.includes(path.basename(rel))));
 fs.renameSync(path.join(STAGE, 'electron.exe'), path.join(STAGE, `${NAME}.exe`));
 
 console.log('放外壳和网页包……');
@@ -44,16 +48,29 @@ const pkg = JSON.parse(fs.readFileSync(path.join(PC, 'package.json'), 'utf8'));
 fs.mkdirSync(APP, { recursive: true });
 // 名字不变：数据目录（%APPDATA%\moyu-pc）和开发时 npm start 是同一个
 fs.writeFileSync(path.join(APP, 'package.json'), JSON.stringify({ name: pkg.name, description: pkg.description, main: pkg.main }, null, 2));
-fs.cpSync(path.join(PC, 'src'), path.join(APP, 'src'), { recursive: true });
-fs.cpSync(path.join(PC, '.web', 'wwwroot'), path.join(APP, '.web', 'wwwroot'), { recursive: true });
+copyDir(path.join(PC, 'src'), path.join(APP, 'src'));
+copyDir(path.join(PC, '.web', 'wwwroot'), path.join(APP, '.web', 'wwwroot'));
 
 console.log('发布采集程序（自带运行时）……');
 run('dotnet', ['publish', 'input', '-c', 'Release', '-r', 'win-x64', '--self-contained', '-p:PublishSingleFile=true',
   '-p:EnableCompressionInSingleFile=true', '-p:DebugType=none', '-o', path.join(APP, '.input'), '--nologo', '-v', 'q']);
 
+// 少了哪样就别发：缺文件的包解开也打不开
+const need = [`${NAME}.exe`, 'resources/app/package.json', 'resources/app/src/main.js', 'resources/app/src/preload.js',
+  'resources/app/.web/wwwroot/index.html', 'resources/app/.input/MoyuInput.exe'];
+const missing = need.filter(f => !fs.existsSync(path.join(STAGE, f)));
+if (missing.length) throw new Error(`包里缺：${missing.join('、')}`);
+
 console.log('压缩……');
-// 资源管理器能认的 zip：.NET 的 ZipFile 写 UTF-8 文件名并打上标记，中文名解开不乱码。路径经环境变量传，不经命令行转义
-run('powershell', ['-NoProfile', '-Command',
-  "Add-Type -AssemblyName System.IO.Compression.FileSystem; [IO.Compression.ZipFile]::CreateFromDirectory($env:PACK_SRC, $env:PACK_ZIP, 'Optimal', $true)"],
-  { env: { ...process.env, PACK_SRC: STAGE, PACK_ZIP: ZIP } });
+// 资源管理器能认的 zip：.NET 的 ZipArchive 写 UTF-8 文件名并打上标记，中文名解开不乱码。逐个文件写，
+// 条目名统一用 /（Windows PowerShell 的 CreateFromDirectory 会写成 \，不合 zip 规范）。路径经环境变量传，不经命令行转义
+run('powershell', ['-NoProfile', '-Command', `$ErrorActionPreference = 'Stop'
+Add-Type -AssemblyName System.IO.Compression, System.IO.Compression.FileSystem
+$root = Split-Path $env:PACK_SRC -Parent
+$zip = [IO.Compression.ZipFile]::Open($env:PACK_ZIP, 'Create')
+Get-ChildItem -LiteralPath $env:PACK_SRC -Recurse -File -Force | ForEach-Object {
+  $name = $_.FullName.Substring($root.Length + 1).Replace([char]92, '/')
+  [IO.Compression.ZipFileExtensions]::CreateEntryFromFile($zip, $_.FullName, $name, 'Optimal') | Out-Null
+}
+$zip.Dispose()`], { env: { ...process.env, PACK_SRC: STAGE, PACK_ZIP: ZIP } });
 console.log(`完成：${ZIP}（${(fs.statSync(ZIP).size / 1048576).toFixed(1)} MB）`);
