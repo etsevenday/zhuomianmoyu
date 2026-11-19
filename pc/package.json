@@ -1,12 +1,13 @@
 {
   "name": "moyu-pc",
   "private": true,
-  "description": "桌面摸鱼 PC 外壳：Electron 装网页版 Blazor WASM 包，加后台输入采集程序",
+  "description": "桌面摸鱼 PC 外壳：Electron 装网页版 Blazor WASM 包，加后台输入采集程序和 Steam 联机小程序",
   "main": "src/main.js",
   "scripts": {
-    "build": "npm run build:web && npm run build:input",
+    "build": "npm run build:web && npm run build:input && npm run build:steam",
     "build:web": "node build-web.mjs",
     "build:input": "dotnet publish input -c Release -o .input --nologo",
+    "build:steam": "dotnet publish steam -c Release -o .steam --nologo",
     "start": "electron ."
   },
   "devDependencies": {

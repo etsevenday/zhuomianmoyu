@@ -28,6 +28,12 @@ const api = {
   setInput: on => ipcRenderer.send('pc:set-input', !!on),
   retryInput: () => ipcRenderer.send('pc:retry-input'),
   introSeen: () => ipcRenderer.send('pc:intro-seen'),
+  /** 联机（B10）：Steam 小程序的事件（和 B9 回环服务同一种 JSON）、发命令。start 订阅事件，小程序没在跑就拉起。 */
+  net: {
+    start: () => ipcRenderer.send('pc:net-start'),
+    cmd: json => ipcRenderer.send('pc:net-cmd', String(json)),
+    onEvent: cb => ipcRenderer.on('pc:net', (_, json) => cb(json)),
+  },
 };
 if (info.test) {
   api.test = {

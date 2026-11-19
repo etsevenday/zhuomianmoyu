@@ -444,9 +444,13 @@
             }
             else if (Session.Room is null && Session.NetEnabled)
             {
-                @* 联机（B9 本机回环，B10 换 Steam）：建房；进别人的房由 Steam 的"接受邀请"进来 *@
+                @* 联机（PC 的 Steam，网页的本机回环）：建房；进别人的房由 Steam 的"接受邀请"进来。Steam 没就绪时说明 TXT-ROOM-065（Q26） *@
                 <div class="room-none">
                     <div class="none-title" data-stat="room-none">@Texts.NetCreate</div>
+                    @if (Session.NetSteamDown)
+                    {
+                        <div class="room-status" data-stat="net-steam">@Texts.NetSteamNeeded</div>
+                    }
                     @if (Session.NetStatus is { } ns)
                     {
                         <div class="room-status" data-stat="net-status">@ns</div>

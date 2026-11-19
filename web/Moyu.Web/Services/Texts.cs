@@ -254,6 +254,7 @@ public static class Texts
     public const string NetCreateFailed = "创建房间失败，请重试。"; // TXT-ROOM-045
     public const string NetJoinFailed = "加入房间失败，请重试。"; // TXT-ROOM-046
     public const string NetRoomGone = "房间已结束，无法重新加入。"; // TXT-ROOM-048
+    public const string NetSteamNeeded = "请先启动并登录Steam，再与好友同房。你仍可继续单机游玩。"; // TXT-ROOM-065
     public const string NetFriendsTitle = "在线Steam好友"; // TXT-ROOM-066
     public const string NetFriendOnline = "在线"; // TXT-ROOM-067
     public const string NetFriendPlaying = "正在玩桌面摸鱼"; // TXT-ROOM-068

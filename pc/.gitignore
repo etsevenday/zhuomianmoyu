@@ -1,5 +1,6 @@
 .web/
 .input/
+.steam/
 input/bin/
 input/obj/
 dist/

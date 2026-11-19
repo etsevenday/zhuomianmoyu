@@ -1,7 +1,8 @@
 // 打 PC 试玩包：pc/dist/zhuomianmoyu-pc-win-x64.zip。解开是一个"桌面摸鱼"文件夹，双击 桌面摸鱼.exe 就能玩，
 // 不用装 Node、.NET：Electron 运行时整个带上，采集程序按自带运行时的单个 exe 发布。
 // 包里：Electron 运行时（exe 改名，只留中文、英文语言包，去掉自带的默认页）+ resources/app（外壳 src/、package.json、
-// 网页 Release 包 .web/wwwroot、采集程序 .input/MoyuInput.exe），路径和开发时一样，外壳不用分两种找法。
+// 网页 Release 包 .web/wwwroot、采集程序 .input/MoyuInput.exe、Steam 小程序 .steam/MoyuSteam.exe 和 steam_api64.dll），
+// 路径和开发时一样，外壳不用分两种找法。
 // 包名用英文：GitHub Releases 不认中文文件名。构建号"PC 试玩版 · <UTC 日期> · <提交>"。
 import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
@@ -55,9 +56,15 @@ console.log('发布采集程序（自带运行时）……');
 run('dotnet', ['publish', 'input', '-c', 'Release', '-r', 'win-x64', '--self-contained', '-p:PublishSingleFile=true',
   '-p:EnableCompressionInSingleFile=true', '-p:DebugType=none', '-o', path.join(APP, '.input'), '--nologo', '-v', 'q']);
 
+console.log('发布 Steam 小程序（自带运行时）……');
+// Steam 的 steam_api64.dll 不打进单个 exe，放在旁边（Steamworks.NET 按文件名找它）
+run('dotnet', ['publish', 'steam', '-c', 'Release', '-r', 'win-x64', '--self-contained', '-p:PublishSingleFile=true',
+  '-p:EnableCompressionInSingleFile=true', '-p:DebugType=none', '-o', path.join(APP, '.steam'), '--nologo', '-v', 'q']);
+
 // 少了哪样就别发：缺文件的包解开也打不开
 const need = [`${NAME}.exe`, 'resources/app/package.json', 'resources/app/src/main.js', 'resources/app/src/preload.js',
-  'resources/app/.web/wwwroot/index.html', 'resources/app/.input/MoyuInput.exe'];
+  'resources/app/.web/wwwroot/index.html', 'resources/app/.input/MoyuInput.exe', 'resources/app/.steam/MoyuSteam.exe',
+  'resources/app/.steam/steam_api64.dll'];
 const missing = need.filter(f => !fs.existsSync(path.join(STAGE, f)));
 if (missing.length) throw new Error(`包里缺：${missing.join('、')}`);
 

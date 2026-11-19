@@ -142,6 +142,8 @@ async function launch({ userData, displays = ONE, port = PORT, env = {}, input =
     const w = d.id && waiters.get(d.id);
     if (w) { waiters.delete(d.id); d.error ? w.bad(new Error(d.error.message)) : w.ok(d.result); }
   };
+  // 外壳退出或崩了：等着的调用都报错，不让脚本一直挂着
+  ws.onclose = () => { for (const w of waiters.values()) w.bad(new Error('调试连接断了')); waiters.clear(); };
   const send = (method, params = {}, sessionId) => new Promise((ok, bad) => {
     const i = ++msgId;
     waiters.set(i, { ok, bad });
@@ -241,9 +243,10 @@ async function launch({ userData, displays = ONE, port = PORT, env = {}, input =
     },
     kill() { try { ws.close(); } catch { } proc.kill(); return exited; },
   };
-  await s('Runtime.evaluate', { expression: HELPERS });
   if (!(await waitFor(`${test ? '!!window.moyuDev && ' : ''}!!(document.querySelector('#pet') || document.querySelector('#avatar')) && (!document.querySelector('[data-stat=save]') || document.querySelector('[data-stat=save]').innerText.trim() === '已保存')`, 40000)))
     throw new Error('小窗没有载入');
+  // 页面载入完再注入：找到页面时它可能还没真正载入，早注入的会随页面载入丢掉
+  await s('Runtime.evaluate', { expression: HELPERS });
   await sleep(500);
   return p;
 }

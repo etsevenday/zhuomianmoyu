@@ -10,15 +10,17 @@ namespace Moyu.Web.Services;
 public sealed record NetFriend(string Id, string Name, bool Playing);
 
 /// <summary>
-/// 联机房间（B9）：页面经 js/net.js 连房间服务，规则全在 Moyu.Core.Rooms.RoomLink（房主权威、请求、快照、换房主）。
-/// 现在只有本机回环（网址带 ?net=本机地址，验收脚本用），B10 把服务换成 Steam。没有 ?net 时这里什么都不做，网页仍是 B3 的模拟房间。
+/// 联机房间：页面经 js/net.js 连房间服务，规则全在 Moyu.Core.Rooms.RoomLink（房主权威、请求、快照、换房主）。
+/// PC 连外壳里的 Steam 小程序（B10）；网页只有带 ?net=本机地址时连本机回环（B9，验收脚本用），否则这里什么都不做，仍是 B3 的模拟房间。
 /// </summary>
 public sealed partial class PetSession
 {
     private const int ActEveryMs = 1000;
 
-    /// <summary>这一页打开了联机（带了本机回环地址）。</summary>
+    /// <summary>这一页打开了联机（PC，或网页带了本机回环地址）。</summary>
     public bool NetEnabled { get; private set; }
+    /// <summary>Steam 没开或没登录（小程序报的）：房间入口说明 TXT-ROOM-065，单机照常（Q26）。</summary>
+    public bool NetSteamDown { get; private set; }
     public bool NetConnected { get; private set; }
     /// <summary>好友列表；null 为还没读到（显示"正在处理"，不冒充没有好友）。</summary>
     public IReadOnlyList<NetFriend>? NetFriends { get; private set; }
@@ -58,7 +60,8 @@ public sealed partial class PetSession
     {
         var cfg = JsonDocument.Parse(await _js.InvokeAsync<string>("moyuNet.config")).RootElement;
         _hello = new TaskCompletionSource<bool>();
-        await _js.InvokeVoidAsync("moyuNet.start", _netRef, cfg.GetProperty("relay").GetString(), _netName);
+        var relay = cfg.TryGetProperty("relay", out var r) ? r.GetString() : null;
+        await _js.InvokeVoidAsync("moyuNet.start", _netRef, relay, _netName);
     }
 
     /// <summary>房间服务推来一件事。</summary>
@@ -69,8 +72,13 @@ public sealed partial class PetSession
         string S(string k) => e.TryGetProperty(k, out var v) && v.ValueKind == JsonValueKind.String ? v.GetString()! : "";
         switch (S("type"))
         {
+            case "steam":
+                NetSteamDown = !e.GetProperty("ready").GetBoolean();
+                break;
             case "hello":
                 _netSelf = S("self");
+                if (S("name") != "") _netName = S("name"); // PC 用 Steam 名字
+                NetSteamDown = false;
                 NetConnected = true;
                 _hello?.TrySetResult(true);
                 break;
@@ -176,7 +184,7 @@ public sealed partial class PetSession
     {
         NetBusy = false;
         Link = null;
-        var text = reason switch { "full" => Texts.RoomFull, "gone" => Texts.NetInviteGone, _ => Texts.NetJoinFailed };
+        var text = reason switch { "full" => Texts.RoomFull, "gone" => Texts.NetInviteGone, "create" => Texts.NetCreateFailed, _ => Texts.NetJoinFailed };
         if (_netRejoining)
         {
             NetRejoinFailed(reason == "gone" ? Texts.NetRoomGone : text);

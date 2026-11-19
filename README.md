@@ -36,14 +36,14 @@ src/Core/                纯 C# 内核，不依赖 UnityEngine；同时是一个
 web/Moyu.Core/           .NET 类库，编译 src/Core 的源码
 web/Moyu.Core.Tests/     NUnit：第一阶段可在内核判定的验收（UI、SPACE、CONTENT 等编号）
 web/Moyu.Web/            Blazor WebAssembly 网页壳：模拟桌面、小窗、面板；手势在 wwwroot/js/pet.js，工作输入、存档、写权在 wwwroot/js/play.js
-pc/                      PC 外壳（Electron）：src/main.js 窗口、穿透与后台输入转发，src/layout.js 窗口尺寸计算，input/ 后台输入采集程序（C#，Raw Input），build-web.mjs 把网页发布进来，pack.mjs 打试玩包
+pc/                      PC 外壳（Electron）：src/main.js 窗口、穿透、后台输入转发与联机小程序的启停，src/layout.js 窗口尺寸计算，input/ 后台输入采集程序（C#，Raw Input），steam/ Steam 小程序（C# + Steamworks.NET：房间、好友、消息翻成页面事件；测试时可走回环模式），build-web.mjs 把网页发布进来，pack.mjs 打试玩包
 tools/verify/            浏览器验收脚本（零依赖 Node + CDP），每批一个，对应 doc/测试用例/ 的用例表；b4.mjs 启动 Electron 测
 tools/steam-spike/       Steam 联机小实验（NET-EVAL-001 第一步，公用测试 ID 480），两台电脑各跑一份，不进游戏
 ```
 
 将来接 Unity：在 Unity 工程的 `Packages/manifest.json` 里加 `"com.moyu.core": "file:../../src/Core"`。
 
-本地运行需要 .NET 8 SDK：`dotnet test web/Moyu.sln`；`dotnet run --project web/Moyu.Web --launch-profile http`（http://localhost:5188）。PC 版：`cd pc && npm install && npm run build && npm start`（`build` = 网页包 + 采集程序；采集程序要 .NET 8 运行时）（`node_modules/electron/dist` 没下来时补 `node node_modules/electron/install.js`）。浏览器验收需要 Node 22+ 和 Chrome/Edge：推送前跑 `node tools/verify/b4.mjs --release`（PC 窗口，要先 `cd pc && npm install`，不占鼠标键盘）；`b5.mjs`（后台输入，开记事本发真实按键点击）和 `b6.mjs`（打包后用包跑 b4、b5）由 CI 在 GitHub 的 Windows 机器上跑，过了才发布 PC 试玩包，本机要跑时别动鼠标键盘，回归 `b9.mjs`（联机协议：脚本起本机回环服务 `relay.mjs`，开 4 个隔离的浏览器上下文当 4 个人，网页带 `?net=` 才连）、`b8.mjs`（画面排版）、`b3.mjs`、`b2.mjs`、`b1.mjs`、`b0.mjs`（都带 `--release`）（照 CI 发布本地 Release 包再测）；也可给开发服务器网址，不给网址就测线上。改了内核还要跑变异测试：`dotnet tool restore` 后在 `web/Moyu.Core.Tests` 里 `dotnet stryker --since:origin/main`（见测试用例准则 §5）。
+本地运行需要 .NET 8 SDK：`dotnet test web/Moyu.sln`；`dotnet run --project web/Moyu.Web --launch-profile http`（http://localhost:5188）。PC 版：`cd pc && npm install && npm run build && npm start`（`build` = 网页包 + 采集程序 + Steam 小程序 `pc/steam`；后两个要 .NET 8 运行时；联机要本机 Steam 开着并登录，开发期用 Steam 公用测试 App ID 480）（`node_modules/electron/dist` 没下来时补 `node node_modules/electron/install.js`）。浏览器验收需要 Node 22+ 和 Chrome/Edge：推送前跑 `node tools/verify/b4.mjs --release`（PC 窗口，要先 `cd pc && npm install`，不占鼠标键盘）；`b5.mjs`（后台输入，开记事本发真实按键点击）和 `b6.mjs`（打包后用包跑 b4、b5、b10）由 CI 在 GitHub 的 Windows 机器上跑，过了才发布 PC 试玩包，本机要跑时别动鼠标键盘；`b10.mjs`（PC 联机：开 4 个 PC 外壳，Steam 小程序走回环模式连 `relay.mjs`，B10-20 往记事本按 3 次键）也在 b6 里跑，回归 `b9.mjs`（联机协议：脚本起本机回环服务 `relay.mjs`，开 4 个隔离的浏览器上下文当 4 个人，网页带 `?net=` 才连）、`b8.mjs`（画面排版）、`b3.mjs`、`b2.mjs`、`b1.mjs`、`b0.mjs`（都带 `--release`）（照 CI 发布本地 Release 包再测）；也可给开发服务器网址，不给网址就测线上。改了内核还要跑变异测试：`dotnet tool restore` 后在 `web/Moyu.Core.Tests` 里 `dotnet stryker --since:origin/main`（见测试用例准则 §5）。
 
 ## 分工
 

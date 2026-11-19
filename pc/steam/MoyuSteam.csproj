@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- PC 联机的 Steam 小程序（B10）：外壳启动时起它，把 Steam 房间、好友、网络消息翻成页面认的事件。不在 web/Moyu.sln 里 -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <AssemblyName>MoyuSteam</AssemblyName>
+    <RootNamespace>Moyu.PcSteam</RootNamespace>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <SelfContained>false</SelfContained>
+  </PropertyGroup>
+
+  <!-- 打包（pack.mjs 自带运行时发布）时裁掉框架里用不到的部分，PC 包要守 200 MB（B6-05）。partial 只裁框架，本程序、内核、Steamworks.NET 原样保留 -->
+  <PropertyGroup Condition="'$(SelfContained)' == 'true'">
+    <PublishTrimmed>true</PublishTrimmed>
+    <TrimMode>partial</TrimMode>
+    <!-- 裁剪时 .NET 8 默认关掉反射序列化；事件是匿名对象转 JSON，要开着（本程序不裁，类型都在） -->
+    <JsonSerializerIsReflectionEnabledByDefault>true</JsonSerializerIsReflectionEnabledByDefault>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Steamworks.NET.AnyCPU" Version="2025.162.5" />
+    <ProjectReference Include="../../web/Moyu.Core/Moyu.Core.csproj" />
+  </ItemGroup>
+
+</Project>

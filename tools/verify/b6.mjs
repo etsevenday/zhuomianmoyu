@@ -1,8 +1,8 @@
 // B6 PC 试玩包验收：node tools/verify/b6.mjs [--release] [--online] [输出目录]
 // 本地：pc/pack.mjs 打包；--online：下载 Releases 上 pc-latest 的包（README 里的固定地址），构建号要等于 origin/main。
 // 用资源管理器同一套解压（Shell.Application）解开，查包内容；以正常模式启动包里的 桌面摸鱼.exe（只换数据目录），
-// 看载入、构建号、采集程序自带运行时；再让 b4、b5 改测这个包（MOYU_PC_APP）。b5 发系统层面的输入，跑的时候不要动鼠标键盘。
-// --online 不重跑 b4、b5：线上的包就是 CI 发布前刚用它们测过的那个 zip。
+// 看载入、构建号、采集程序自带运行时；再让 b4、b5、b10 改测这个包（MOYU_PC_APP）。b5、b10 发系统层面的输入，跑的时候不要动鼠标键盘。
+// --online 不重跑 b4、b5、b10：线上的包就是 CI 发布前刚用它们测过的那个 zip。
 import { spawn, spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
@@ -81,9 +81,9 @@ async function run() {
   const root = path.join(x, '桌面摸鱼');
   const exe = path.join(root, '桌面摸鱼.exe');
   const app = path.join(root, 'resources', 'app');
-  const need = ['package.json', 'src/main.js', 'src/preload.js', 'src/layout.js', '.web/wwwroot/index.html', '.input/MoyuInput.exe'];
+  const need = ['package.json', 'src/main.js', 'src/preload.js', 'src/layout.js', '.web/wwwroot/index.html', '.input/MoyuInput.exe', '.steam/MoyuSteam.exe', '.steam/steam_api64.dll'];
   const missing = need.filter(f => !exists(path.join(app, f)));
-  const extra = ['resources/default_app.asar', 'resources/app/node_modules', 'resources/app/input', 'resources/app/build-web.mjs', 'resources/app/pack.mjs', 'electron.exe']
+  const extra = ['resources/default_app.asar', 'resources/app/node_modules', 'resources/app/input', 'resources/app/steam', 'resources/app/build-web.mjs', 'resources/app/pack.mjs', 'electron.exe']
     .filter(f => exists(path.join(root, f)));
   const locales = exists(path.join(root, 'locales')) ? fs.readdirSync(path.join(root, 'locales')).sort() : [];
   const pkg = exists(path.join(app, 'package.json')) ? JSON.parse(fs.readFileSync(path.join(app, 'package.json'), 'utf8')) : {};
@@ -92,7 +92,7 @@ async function run() {
 $z = [IO.Compression.ZipFile]::OpenRead($env:X_ZIP); ConvertTo-Json -Compress @($z.Entries | ForEach-Object { $_.FullName }); $z.Dispose()`, { X_ZIP: zip }));
   const backslash = names.filter(n => n.includes('\\')).length;
   const files = fs.readdirSync(x, { recursive: true, withFileTypes: true }).filter(e => e.isFile()).length;
-  check('B6-01 资源管理器解开是"桌面摸鱼"文件夹和 桌面摸鱼.exe；外壳、网页包、采集程序都在；没有默认页和开发用的东西；条目名用 /',
+  check('B6-01 资源管理器解开是"桌面摸鱼"文件夹和 桌面摸鱼.exe；外壳、网页包、采集程序、Steam 小程序都在；没有默认页和开发用的东西；条目名用 /',
     top.length === 1 && top[0] === '桌面摸鱼' && exists(exe) && missing.length === 0 && extra.length === 0
     && locales.join() === 'en-US.pak,zh-CN.pak' && pkg.name === 'moyu-pc' && pkg.main === 'src/main.js'
     && backslash === 0 && files === names.length,
@@ -145,6 +145,9 @@ if ($p) { @{ pid = $p.ProcessId; path = $p.ExecutablePath; modules = @((Get-Proc
   const b5 = await suite('b5');
   check('B6-04 用包里的 exe 跑 b4、b5 全部通过', b4.code === 0 && b5.code === 0 && b4.failed === 0 && b5.failed === 0 && b4.build === build_ && b5.build === build_,
     { b4, b5 });
+  const b10 = await suite('b10');
+  check('B10-32 包里有 Steam 小程序和 steam_api64.dll；用包里的 exe 跑 b10 全部通过',
+    !missing.some(f => f.startsWith('.steam/')) && b10.code === 0 && b10.failed === 0 && !b10.fatal && b10.build === build_, { b10 });
 }
 
 function staticChecks() {
@@ -172,7 +175,7 @@ function staticChecks() {
     { encoding: 'utf8', env: { ...process.env, GITHUB_SHA: 'abc1234def', GITHUB_REPOSITORY: 'etsevenday/zhuomianmoyu' } });
   ok.script = dry.status === 0 && dry.stdout.startsWith('PC 试玩版 abc1234\n') && dry.stdout.includes(URL_)
     && dry.stdout.includes('"更多信息 → 仍要运行"') && dry.stdout.includes('%APPDATA%\\moyu-pc');
-  check('B6-06 工作流：推 main 触发，内核测试过了才在 Windows 上打包并用包跑 b6（含 b4、b5），过了才发到 pc-latest（挪标签、替换包、写提交号），只有它能写仓库；发布脚本试跑出的标题、说明对',
+  check('B6-06 工作流：推 main 触发，内核测试过了才在 Windows 上打包并用包跑 b6（含 b4、b5、b10），过了才发到 pc-latest（挪标签、替换包、写提交号），只有它能写仓库；发布脚本试跑出的标题、说明对',
     Object.values(ok).every(Boolean), { ...ok, dry: dry.stdout || dry.stderr });
 }
 
